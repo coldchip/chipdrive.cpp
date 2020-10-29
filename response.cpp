@@ -12,16 +12,23 @@ ChipHttpResponse::ChipHttpResponse(int fd) {
 }
 
 void ChipHttpResponse::insert(string key, string val) {
-	this->header.insert(pair<string, string>(key, val));
+	auto const result = this->header.insert(pair<string, string>(key, val));
+	if (not result.second) { 
+		result.first->second = val; 
+	}
 }
 
 string ChipHttpResponse::build() {
-	string result = "";
-	result += "HTTP/1.1 200 OK\r\n";
+	string result;
+	result.append("HTTP/1.1 200 OK");
+	result.append("\r\n");
 	for (map<string, string>::iterator it = this->header.begin(); it != this->header.end(); it++ ) {
-	    result += it->first + ": " + it->second + "\r\n";
+	    result.append(it->first);
+	    result.append(": ");
+	    result.append(it->second);
+	    result.append("\r\n");
 	}
-	result += "\r\n";
+	result.append("\r\n");
 	return result;
 }
 
