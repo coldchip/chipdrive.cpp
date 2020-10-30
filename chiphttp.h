@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <functional>
+#include "ThreadPool.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ class Response {
 class ChipHttp {
 	using Handler = function<void(Request &request, Response &response)>;
 	public:
+		ChipHttp();
 		ChipHttp(int port);
 		void start();
 		void route(Handler handler);
@@ -53,6 +55,7 @@ class ChipHttp {
 	private:
 		void error(string data);
 		void process(int clientfd);
+		ThreadPool *pool;
 		Handler cb;
 		int sockfd;
 		int port;
