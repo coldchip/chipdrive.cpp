@@ -4,17 +4,25 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <functional>
 
 using namespace std;
 
 typedef struct sockaddr_in SockAddrIn;
 typedef struct sockaddr SockAddr;
 
-class ChipHttpRequest {
+struct SocketClosed : public exception {
+	const char *what () const throw () {
+		return "C++ Exception";
+	}
+};
+
+class Request {
 	public:
-		ChipHttpRequest(int fd);
-		void parse(string data);
-		~ChipHttpRequest();
+		Request(int fd);
+		void parse();
+		int read(char *buf, int length);
+		~Request();
 	private:
 		int fd;
 		vector<string> split (string s, string delimiter);
@@ -22,12 +30,12 @@ class ChipHttpRequest {
 		
 };
 
-class ChipHttpResponse {
+class Response {
 	public:
-		ChipHttpResponse(int fd);
+		Response(int fd);
 		void insert(string key, string val);
 		int write(string data);
-		~ChipHttpResponse();
+		~Response();
 	private:
 		int fd;
 		bool header_sent;
@@ -36,17 +44,19 @@ class ChipHttpResponse {
 };
 
 class ChipHttp {
+	using Handler = function<void(Request &request, Response &response)>;
 	public:
 		ChipHttp(int port);
 		void start();
-		void error(string data);
-		void process(int clientfd);
-		void handle(ChipHttpRequest &request, ChipHttpResponse &response);
+		void route(Handler handler);
 		~ChipHttp();
 	private:
+		void error(string data);
+		void process(int clientfd);
+		Handler cb;
 		int sockfd;
 		int port;
-		
+
 };
 
 #endif

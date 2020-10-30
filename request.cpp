@@ -1,16 +1,17 @@
 #include <string>
 #include <iostream>
-#include <vector>
-#include <map>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "chiphttp.h"
 
 using namespace std;
 
-ChipHttpRequest::ChipHttpRequest(int fd) {
+Request::Request(int fd) {
 	this->fd = fd;
 }
 
-vector<string> ChipHttpRequest::split(string s, string delimiter) {
+vector<string> Request::split(string s, string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     string token;
     vector<string> res;
@@ -25,7 +26,16 @@ vector<string> ChipHttpRequest::split(string s, string delimiter) {
     return res;
 }
 
-void ChipHttpRequest::parse(string data) {
+void Request::parse() {
+
+	string data = "";
+
+	char bit;
+	while(data.find("\r\n\r\n") == string::npos) {
+		this->read(&bit, sizeof(bit));
+		data += bit;
+	}
+
 	vector<string> pairs = this->split(data, "\r\n");
 
 	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
@@ -38,6 +48,15 @@ void ChipHttpRequest::parse(string data) {
 	}
 }
 
-ChipHttpRequest::~ChipHttpRequest() {
+int Request::read(char *buf, int length) {
+	int read = 0;
+	read = recv(this->fd, buf, length, 0);
+	if(read < 1) {
+		throw SocketClosed();
+	}
+	return read;
+}
+
+Request::~Request() {
 	
 }

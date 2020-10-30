@@ -6,19 +6,19 @@
 
 using namespace std;
 
-ChipHttpResponse::ChipHttpResponse(int fd) {
+Response::Response(int fd) {
 	this->fd          = fd;
 	this->header_sent = false;
 }
 
-void ChipHttpResponse::insert(string key, string val) {
+void Response::insert(string key, string val) {
 	auto const result = this->header.insert(pair<string, string>(key, val));
 	if (not result.second) { 
 		result.first->second = val; 
 	}
 }
 
-string ChipHttpResponse::build() {
+string Response::build() {
 	string result;
 	result.append("HTTP/1.1 200 OK");
 	result.append("\r\n");
@@ -32,15 +32,25 @@ string ChipHttpResponse::build() {
 	return result;
 }
 
-int ChipHttpResponse::write(string data) {
+int Response::write(string data) {
 	if(this->header_sent == false) {
 		string header = this->build();
-		send(this->fd, header.c_str(), header.size(), 0);
+		if(send(this->fd, header.c_str(), header.size(), 0) < 1) {
+			throw SocketClosed();
+		}
 		this->header_sent = true;
 	}
-	return send(this->fd, data.c_str(), data.size(), 0);
+
+	int written = 0;
+	written = send(this->fd, data.c_str(), data.size(), 0);
+
+	if(written < 1) {
+		throw SocketClosed();
+	}
+
+	return written;
 }
 
-ChipHttpResponse::~ChipHttpResponse() {
+Response::~Response() {
 	
 }

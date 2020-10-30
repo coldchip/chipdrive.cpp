@@ -6,6 +6,8 @@
 #include <cstring>
 #include <unistd.h>
 #include <stdlib.h>
+#include <thread>
+#include <functional>
 #include "chiphttp.h"
 
 using namespace std;
@@ -55,44 +57,33 @@ void ChipHttp::start() {
 
 		int clientfd = accept(this->sockfd, (SockAddr*)&client_addr, &client_length);
 
-		this->process(clientfd);
+		thread t1(&ChipHttp::process, this, clientfd);
+		t1.detach();
 	}
 }
 
 void ChipHttp::process(int fd) {
 	try {
 		while(1) {
-			ChipHttpRequest  request  = ChipHttpRequest(fd);
-			ChipHttpResponse response = ChipHttpResponse(fd);
+			Request  request  = Request(fd);
+			Response response = Response(fd);
 
-			string header_data = "";
+			request.parse();
 
-			char bit;
-			while(header_data.find("\r\n\r\n") == string::npos) {
-				if(recv(fd, &bit, sizeof(bit), 0) < 1) {
-					close(fd);
-					throw string("Socket Closed");
-				}
-				header_data += bit;
-			}
-
-			request.parse(header_data);
-
-			response.insert("Server", "ColdChip Web Server");
+			response.insert("Connection", "Keep-Alive");
 			response.insert("Content-Type", "text/plain");
-			response.insert("Content-Length", "0");
+			response.insert("Keep-Alive", "timeout=5, max=1000");
+			response.insert("Server", "ColdChip API Server v2");
 
-			this->handle(request, response);
+			this->cb(request, response);
 		}
-	} catch(string &err) {
+	} catch(SocketClosed &e) {
 		close(fd);
 	}
 }
 
-void ChipHttp::handle(ChipHttpRequest &request, ChipHttpResponse &response) {
-	string data = "lol wtf";
-	response.insert("Content-Length", to_string(data.size()));
-	response.write(data);
+void ChipHttp::route(Handler handler) {
+	this->cb = handler;
 }
 
 void ChipHttp::error(string data) {
