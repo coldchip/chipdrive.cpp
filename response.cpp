@@ -33,6 +33,10 @@ string Response::build() {
 }
 
 int Response::write(string data) {
+	return this->write((char*)data.c_str(), data.length());
+}
+
+int Response::write(char *data, int size) {
 	if(this->header_sent == false) {
 		string header = this->build();
 		if(send(this->fd, header.c_str(), header.size(), 0) < 1) {
@@ -42,7 +46,7 @@ int Response::write(string data) {
 	}
 
 	int written = 0;
-	written = send(this->fd, data.c_str(), data.size(), 0);
+	written = send(this->fd, data, size, 0);
 
 	if(written < 1) {
 		throw SocketClosed();

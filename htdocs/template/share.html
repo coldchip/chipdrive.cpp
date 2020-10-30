@@ -1,0 +1,9 @@
+<md-dialog class="sharing">
+	<input type="text" name="" class="input-link text" value="{{ link }}" readonly>
+	<md-switch class="md-primary" md-no-ink ng-model="status" ng-disabled="swDisabled" ng-change="onSwitch()">
+		<p class="text">Enable Sharing</p>
+	</md-switch>
+	<md-switch class="md-primary" md-no-ink>
+		<p class="text">Enable Write</p>
+	</md-switch>
+</md-dialog>

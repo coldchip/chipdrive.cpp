@@ -56,7 +56,7 @@ void ChipHttp::start() {
     	error("listen failed..."); 
     }
 
-    this->pool = new ThreadPool(200);
+    this->pool = new ThreadPool(100);
 
 	while(1) {
 		SockAddrIn client_addr;
@@ -93,6 +93,21 @@ void ChipHttp::process(int fd) {
 
 void ChipHttp::route(Handler handler) {
 	this->cb = handler;
+}
+
+vector<string> ChipHttp::split(string s, string delimiter) {
+    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    string token;
+    vector<string> res;
+
+    while ((pos_end = s.find (delimiter, pos_start)) != string::npos) {
+        token = s.substr (pos_start, pos_end - pos_start);
+        pos_start = pos_end + delim_len;
+        res.push_back (token);
+    }
+
+    res.push_back (s.substr (pos_start));
+    return res;
 }
 
 void ChipHttp::error(string data) {

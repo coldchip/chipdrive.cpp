@@ -20,15 +20,16 @@ struct SocketClosed : public exception {
 
 class Request {
 	public:
+		string method;
+		string path;
+
 		Request(int fd);
 		void parse();
 		int read(char *buf, int length);
 		~Request();
 	private:
 		int fd;
-		vector<string> split (string s, string delimiter);
 		map <string, string> header;
-		
 };
 
 class Response {
@@ -36,30 +37,36 @@ class Response {
 		Response(int fd);
 		void insert(string key, string val);
 		int write(string data);
+		int write(char *data, int size);
 		~Response();
 	private:
 		int fd;
 		bool header_sent;
 		map <string, string> header;
+
 		string build();
 };
 
 class ChipHttp {
 	using Handler = function<void(Request &request, Response &response)>;
 	public:
+		map<string, string> mime;
+
+		static vector<string> split (string s, string delimiter);
+
 		ChipHttp();
 		ChipHttp(int port);
 		void start();
 		void route(Handler handler);
 		~ChipHttp();
 	private:
-		void error(string data);
-		void process(int clientfd);
 		ThreadPool *pool;
 		Handler cb;
 		int sockfd;
 		int port;
 
+		void error(string data);
+		void process(int clientfd);
 };
 
 #endif
