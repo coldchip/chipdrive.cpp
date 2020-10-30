@@ -56,7 +56,7 @@ void ChipHttp::start() {
     	error("listen failed..."); 
     }
 
-    this->pool = new ThreadPool(500);
+    this->pool = new ThreadPool(200);
 
 	while(1) {
 		SockAddrIn client_addr;
