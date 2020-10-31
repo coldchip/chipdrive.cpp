@@ -4,8 +4,6 @@
 #include <cstring>
 #include "chiphttp.h"
 
-using namespace std;
-
 Response::Response(int fd) {
 	this->fd          = fd;
 	this->header_sent = false;

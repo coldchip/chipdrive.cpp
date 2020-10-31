@@ -5,8 +5,6 @@
 #include <sys/socket.h>
 #include "chiphttp.h"
 
-using namespace std;
-
 Request::Request(int fd) {
 	this->fd = fd;
 }
