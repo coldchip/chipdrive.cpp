@@ -12,7 +12,7 @@ typedef struct sockaddr_in SockAddrIn;
 typedef struct sockaddr SockAddr;
 
 struct SocketClosed : public exception {
-	const char *what () const throw () {
+	const char *what() const throw() {
 		return "C++ Exception";
 	}
 };
@@ -51,7 +51,7 @@ class ChipHttp {
 	public:
 		map<string, string> mime;
 
-		static vector<string> split (string s, string delimiter);
+		static vector<string> split(string s, string delimiter);
 
 		ChipHttp();
 		ChipHttp(int port);

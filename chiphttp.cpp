@@ -24,10 +24,10 @@ void ChipHttp::start() {
 	this->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	struct timeval timeout;      
-    timeout.tv_sec = 10;
-    timeout.tv_usec = 0;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
 
-    int one = 1;
+	int one = 1;
 
     if(setsockopt(this->sockfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0) {
 		error("setsockopt(SO_REUSEADDR) failed");
@@ -59,11 +59,12 @@ void ChipHttp::start() {
 
 		int clientfd = accept(this->sockfd, (SockAddr*)&client_addr, &client_length);
 
-		
-		thread t1(&ChipHttp::process, this, clientfd);
-		t1.detach();
-		
-
+		try {
+			thread t1(&ChipHttp::process, this, clientfd);
+			t1.detach();
+		} catch(const exception& e) {
+			
+		}
 	}
 }
 
