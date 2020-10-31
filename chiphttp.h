@@ -67,7 +67,9 @@ class ChipHttp {
 	public:
 		map<string, string> mime;
 
-		static vector<string> split(string s, string delimiter);
+		static vector<string> SplitToken(string s, string delimiter);
+		static pair<string, string> SplitPair(string s, string delimiter);
+		static string CleanPath(string path);
 
 		ChipHttp();
 		ChipHttp(int port);

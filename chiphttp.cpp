@@ -82,11 +82,11 @@ void ChipHttp::process(int fd) {
 			this->cb(request, response);
 		}
 	} catch(const SocketClosedException &e) {
-		this->log(string(e.what()));
+		// this->log(string(e.what()));
 	} catch(const HeaderTooLargeException &e) {
-		this->log(string(e.what()));
+		// this->log(string(e.what()));
 	} catch(const MalformedHeaderException &e) {
-		this->log(string(e.what()));
+		// this->log(string(e.what()));
 	}
 	close(fd);
 }
@@ -95,19 +95,47 @@ void ChipHttp::route(Handler handler) {
 	this->cb = handler;
 }
 
-vector<string> ChipHttp::split(string s, string delimiter) {
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    string token;
-    vector<string> res;
+vector<string> ChipHttp::SplitToken(string s, string delimiter) {
+	size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+	string token;
+	vector<string> res;
 
-    while ((pos_end = s.find (delimiter, pos_start)) != string::npos) {
-        token = s.substr (pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back (token);
-    }
+	while ((pos_end = s.find (delimiter, pos_start)) != string::npos) {
+		token = s.substr (pos_start, pos_end - pos_start);
+		pos_start = pos_end + delim_len;
+		res.push_back (token);
+	}
 
-    res.push_back (s.substr (pos_start));
-    return res;
+	res.push_back (s.substr (pos_start));
+	return res;
+}
+
+pair<string, string> ChipHttp::SplitPair(string s, string delimiter) {
+	pair<string, string> res;
+
+	size_t delim_pos = s.find(delimiter);
+
+	if(delim_pos != string::npos) {
+		res.first = s.substr(0, delim_pos);
+		res.second = s.substr(delim_pos + delimiter.length());
+	}
+	return res;
+}
+
+string ChipHttp::CleanPath(string pair) {
+	vector<string> pieces = ChipHttp::SplitToken(pair, "/");
+	string glue = "";
+	for(auto t = pieces.begin(); t != pieces.end(); ++t) {
+		if((*t).find("..") == string::npos && (*t).length() > 0) {
+			glue.append(*t);
+			glue.append("/");
+		}
+	}
+
+	if(glue.back() == '/') {
+		glue.pop_back();
+	}
+	return glue;
 }
 
 void ChipHttp::error(string data) {

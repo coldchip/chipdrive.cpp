@@ -24,21 +24,30 @@ void Request::parse() {
 		data += bit;
 	}
 
-	vector<string> pairs = ChipHttp::split(data, "\r\n");
+	vector<string> pairs = ChipHttp::SplitToken(data, "\r\n");
 
 	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
 		if(t == pairs.begin()) {
-			vector<string> kv = ChipHttp::split(*t, " ");
+			// at header top
+			vector<string> kv = ChipHttp::SplitToken(*t, " ");
 			if(kv.size() == 3) {
 				this->method = kv.at(0);
 				this->path = kv.at(1);
 			} else {
 				throw MalformedHeaderException();
 			}
+		} else if(t == pairs.end() - 1 || t == pairs.end() - 2) {
+			// at \r\n\r\n
+			if((*t).length() > 0) {
+				throw MalformedHeaderException();
+			}
 		} else {
-			vector<string> kv = ChipHttp::split(*t, ":");
-			if(kv.size() == 2) {
-				this->header.insert(pair<string, string>(kv.at(0), kv.at(1)));
+			// at any header pair
+			pair<string, string> kv = ChipHttp::SplitPair(*t, ":");
+			if(kv.first.length() > 0 && kv.second.length() > 0) {
+				this->header.insert(kv);
+			} else {
+				throw MalformedHeaderException();
 			}
 		}
 	}
