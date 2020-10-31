@@ -73,7 +73,6 @@ int main(int argc, char const *argv[]) {
 				cout << e.what() << endl;
 				throw SocketClosed();
 			}
-			printf("ok ended\n");
 		} else {
 			string data = "404 Not Found";
 

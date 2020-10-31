@@ -63,7 +63,7 @@ void ChipHttp::start() {
 			thread t1(&ChipHttp::process, this, clientfd);
 			t1.detach();
 		} catch(const exception& e) {
-			
+			cout << e.what() << endl;
 		}
 	}
 }
