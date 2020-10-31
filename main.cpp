@@ -5,8 +5,6 @@
 #include <sys/stat.h>
 #include "chiphttp.h"
 
-using namespace std;
-
 int main(int argc, char const *argv[]) {
 
 	ChipHttp chttp = ChipHttp(8080);
@@ -71,7 +69,7 @@ int main(int argc, char const *argv[]) {
 				}
 			} catch (ifstream::failure &e) {
 				cout << e.what() << endl;
-				throw SocketClosed();
+				throw SocketClosedException();
 			}
 		} else {
 			string data = "404 Not Found";

@@ -6,7 +6,7 @@ BIN     := bin
 SRCS    := $(wildcard *.cpp)
 EXE     := $(BIN)/chipdrive
 CFLAGS  := -Wall
-LIBS    := -lpthread -Ofast
+LIBS    := -lpthread -Ofast -s
 ifeq ($(OS),Windows_NT)
 	LIBS := $(LIBS) -lws2_32
 endif

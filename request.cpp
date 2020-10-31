@@ -7,6 +7,7 @@
 
 Request::Request(int fd) {
 	this->fd = fd;
+	this->parse();
 }
 
 void Request::parse() {
@@ -14,7 +15,11 @@ void Request::parse() {
 	string data = "";
 
 	char bit;
+
 	while(data.find("\r\n\r\n") == string::npos) {
+		if(data.length() > MAX_HEADER_LENGTH) {
+			throw HeaderTooLargeException();
+		}
 		this->read(&bit, sizeof(bit));
 		data += bit;
 	}
@@ -27,6 +32,8 @@ void Request::parse() {
 			if(kv.size() == 3) {
 				this->method = kv.at(0);
 				this->path = kv.at(1);
+			} else {
+				throw MalformedHeaderException();
 			}
 		} else {
 			vector<string> kv = ChipHttp::split(*t, ":");
@@ -41,7 +48,7 @@ int Request::read(char *buf, int length) {
 	int read = 0;
 	read = recv(this->fd, buf, length, 0);
 	if(read < 1) {
-		throw SocketClosed();
+		throw SocketClosedException();
 	}
 	return read;
 }

@@ -74,8 +74,6 @@ void ChipHttp::process(int fd) {
 			Request  request  = Request(fd);
 			Response response = Response(fd);
 
-			request.parse();
-
 			response.insert("Connection", "Keep-Alive");
 			response.insert("Content-Type", "text/plain");
 			response.insert("Keep-Alive", "timeout=5, max=1000");
@@ -83,9 +81,14 @@ void ChipHttp::process(int fd) {
 
 			this->cb(request, response);
 		}
-	} catch(const exception& e) {
-		close(fd);
+	} catch(const SocketClosedException &e) {
+		this->log(string(e.what()));
+	} catch(const HeaderTooLargeException &e) {
+		this->log(string(e.what()));
+	} catch(const MalformedHeaderException &e) {
+		this->log(string(e.what()));
 	}
+	close(fd);
 }
 
 void ChipHttp::route(Handler handler) {
@@ -108,8 +111,12 @@ vector<string> ChipHttp::split(string s, string delimiter) {
 }
 
 void ChipHttp::error(string data) {
-	printf("%s\n", data.c_str());
+	printf("ChipHttp::error [%s]\n", data.c_str());
 	exit(1);
+}
+
+void ChipHttp::log(string data) {
+	printf("ChipHttp::log [%s]\n", data.c_str());
 }
 
 ChipHttp::~ChipHttp() {

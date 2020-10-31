@@ -8,12 +8,27 @@
 
 using namespace std;
 
+#define MAX_HEADER_LENGTH 8192 * 2
+#define MAX_POST_LENGTH 8192
+
 typedef struct sockaddr_in SockAddrIn;
 typedef struct sockaddr SockAddr;
 
-struct SocketClosed : public exception {
+struct SocketClosedException : public exception {
 	const char *what() const throw() {
-		return "C++ Exception";
+		return "ChipDrive SocketClosedException";
+	}
+};
+
+struct HeaderTooLargeException : public exception {
+	const char *what() const throw() {
+		return "ChipDrive HeaderTooLargeException";
+	}
+};
+
+struct MalformedHeaderException : public exception {
+	const char *what() const throw() {
+		return "ChipDrive MalformedHeaderException";
 	}
 };
 
@@ -23,12 +38,13 @@ class Request {
 		string path;
 
 		Request(int fd);
-		void parse();
 		int read(char *buf, int length);
 		~Request();
 	private:
 		int fd;
 		map <string, string> header;
+
+		void parse();
 };
 
 class Response {
@@ -64,6 +80,7 @@ class ChipHttp {
 		int port;
 
 		void error(string data);
+		void log(string data);
 		void process(int clientfd);
 };
 
