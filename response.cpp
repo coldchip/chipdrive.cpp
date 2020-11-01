@@ -16,7 +16,7 @@ void Response::PutHeader(string key, string val) {
 	}
 }
 
-string Response::build() {
+string Response::Build() {
 	string result;
 	result.append("HTTP/1.1 200 OK");
 	result.append("\r\n");
@@ -36,7 +36,7 @@ int Response::write(string data) {
 
 int Response::write(char *data, int size) {
 	if(this->header_sent == false) {
-		string header = this->build();
+		string header = this->Build();
 		if(send(this->fd, header.c_str(), header.size(), 0) < 1) {
 			throw IOException();
 		}

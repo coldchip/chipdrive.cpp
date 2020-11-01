@@ -7,18 +7,26 @@
 
 Request::Request(int fd) {
 	this->fd = fd;
-	this->parse();
+	this->Parse();
 }
 
 string Request::GetHeader(string key) {
-	map<string, string>::iterator kv = this->header.find(key);
+	auto kv = this->header.find(key);
 	if(kv != this->header.end()) {
 		return kv->second;
 	}
 	return "";
 }
 
-void Request::parse() {
+string Request::GetQuery(string key) {
+	auto kv = this->query.find(key);
+	if(kv != this->query.end()) {
+		return kv->second;
+	}
+	return "";
+}
+
+void Request::Parse() {
 
 	string data = "";
 
@@ -32,7 +40,11 @@ void Request::parse() {
 		data += bit;
 	}
 
-	vector<string> pairs = ChipHttp::SplitToken(data, "\r\n");
+	this->ParseHeader(data);
+}
+
+void Request::ParseHeader(string header) {
+	vector<string> pairs = ChipHttp::SplitToken(header, "\r\n");
 
 	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
 		if(t == pairs.begin()) {
@@ -40,7 +52,16 @@ void Request::parse() {
 			vector<string> kv = ChipHttp::SplitToken(*t, " ");
 			if(kv.size() == 3) {
 				this->method = kv.at(0);
-				this->path = kv.at(1);
+				pair<string, string> pathquery = ChipHttp::SplitPair(kv.at(1), "?");
+				if(pathquery.first.length() > 0) {
+					this->path = pathquery.first;
+				} else {
+					throw MalformedHeaderException();
+				}
+
+				if(pathquery.second.length() > 0) {
+					this->ParseQuery(pathquery.second);
+				}
 			} else {
 				throw MalformedHeaderException();
 			}
@@ -51,12 +72,29 @@ void Request::parse() {
 			}
 		} else {
 			// at any header pair
-			pair<string, string> kv = ChipHttp::SplitPair(*t, ":");
-			if(kv.first.length() > 0 && kv.second.length() > 0) {
-				this->header.insert(kv);
+			if((*t).length() > 0) {
+				pair<string, string> kv = ChipHttp::SplitPair(*t, ":");
+				string key = ChipHttp::Trim(kv.first, " ");
+				string val = ChipHttp::Trim(kv.second, " ");
+				if(key.length() > 0 && val.length() > 0) {
+					this->header.insert(pair<string, string>(key, val));
+				} else {
+					throw MalformedHeaderException();
+				}
 			} else {
 				throw MalformedHeaderException();
 			}
+		}
+	}
+}
+
+void Request::ParseQuery(string query) {
+	vector<string> pairs = ChipHttp::SplitToken(query, "&");
+
+	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
+		if((*t).length() > 0) {
+			pair<string, string> kv = ChipHttp::SplitPair(*t, "=");
+			this->query.insert(kv);
 		}
 	}
 }

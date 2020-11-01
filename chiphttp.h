@@ -39,13 +39,17 @@ class Request {
 
 		Request(int fd);
 		string GetHeader(string key);
+		string GetQuery(string key);
 		int read(char *buf, int length);
 		~Request();
 	private:
 		int fd;
 		map <string, string> header;
+		map <string, string> query;
 
-		void parse();
+		void Parse();
+		void ParseHeader(string header);
+		void ParseQuery(string query);
 };
 
 class Response {
@@ -60,7 +64,7 @@ class Response {
 		bool header_sent;
 		map <string, string> header;
 
-		string build();
+		string Build();
 };
 
 class ChipHttp {
@@ -71,6 +75,8 @@ class ChipHttp {
 		static vector<string> SplitToken(string s, string delimiter);
 		static pair<string, string> SplitPair(string s, string delimiter);
 		static string CleanPath(string path);
+		static string Trim(string str, string whitespace);
+		static string GetMIME(string ext);
 
 		ChipHttp();
 		ChipHttp(int port);

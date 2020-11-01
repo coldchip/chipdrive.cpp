@@ -118,6 +118,9 @@ pair<string, string> ChipHttp::SplitPair(string s, string delimiter) {
 	if(delim_pos != string::npos) {
 		res.first = s.substr(0, delim_pos);
 		res.second = s.substr(delim_pos + delimiter.length());
+	} else {
+		res.first = s;
+		res.second = "";
 	}
 	return res;
 }
@@ -136,6 +139,40 @@ string ChipHttp::CleanPath(string pair) {
 		glue.pop_back();
 	}
 	return glue;
+}
+
+string ChipHttp::Trim(string str, string whitespace) {
+	auto begin = str.find_first_not_of(whitespace);
+	if(begin != string::npos) {
+		return str.substr(begin);
+	}
+	return "";
+}
+
+string ChipHttp::GetMIME(string ext) {
+	string mime = "application/octet-stream";
+	if(ext.find(".html") != string::npos) {
+		mime = "text/html";
+	} else if(ext.find(".css") != string::npos) {
+		mime = "text/css";
+	} else if(ext.find(".js") != string::npos) {
+		mime = "application/javascript";
+	} else if(ext.find(".png") != string::npos) {
+		mime = "image/png";
+	} else if(ext.find(".jpg") != string::npos) {
+		mime = "image/jpeg";
+	} else if(ext.find(".jpeg") != string::npos) {
+		mime = "image/jpeg";
+	} else if(ext.find(".svg") != string::npos) {
+		mime = "image/svg+xml";
+	} else if(ext.find(".mp3") != string::npos) {
+		mime = "audio/mp3";
+	} else if(ext.find(".mp4") != string::npos) {
+		mime = "video/mp4";
+	} else if(ext.find(".mov") != string::npos) {
+		mime = "video/quicktime";
+	}
+	return mime;
 }
 
 void ChipHttp::error(string data) {
