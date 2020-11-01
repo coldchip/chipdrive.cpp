@@ -139,19 +139,28 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 			try {
 				file.seekg(0, file.end);
 				int length = file.tellg();
-				file.seekg(0, file.beg);
 
-				string range = request.GetHeader("Range");
 				int start = 0;
 				int end = length - 1;
-				sscanf(range.c_str(), "bytes=%i-%i", &start, &end);
+
+				string range = request.GetHeader("Range");
+				if(range.length() > 0) {
+					sscanf(range.c_str(), "bytes=%i-%i", &start, &end);
+					response.PutHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(length));
+					response.SetStatus(206);
+				}
+
+				file.seekg(start);
 
 				string mime = ChipHttp::GetMIME(path);
+				response.PutHeader("Accept-Ranges", "bytes");
 				response.PutHeader("Content-Type", mime);
-				response.PutHeader("Content-Length", to_string(length));
+				response.PutHeader("Content-Length", to_string((end - start) + 1));
+
 				char buf[8192 * 4];
-				while(!file.eof()) {
-					file.read(buf, sizeof(buf));
+				for(int p = start; p < end; p += sizeof(buf)) {
+					int to_read = min((int)sizeof(buf), (int)(end - p) + 1);
+					file.read(buf, to_read);
 					response.write(buf, file.gcount());
 				}
 				file.close();

@@ -16,9 +16,27 @@ void Response::PutHeader(string key, string val) {
 	}
 }
 
+void Response::SetStatus(int status) {
+	this->status = status;
+}
+
 string Response::Build() {
 	string result;
-	result.append("HTTP/1.1 200 OK");
+	string status_string = "HTTP/1.1 200 OK";
+	switch(this->status) {
+		case 200:
+			result.append("HTTP/1.1 200 OK");
+		break;
+		case 206:
+			result.append("HTTP/1.1 206 Partial Content");
+		break;
+		case 404:
+			result.append("HTTP/1.1 404 Not Found");
+		break;
+		case 416:
+			result.append("HTTP/1.1 416 Requested Range Not Satisfiable");
+		break;
+	}
 	result.append("\r\n");
 	for (map<string, string>::iterator it = this->header.begin(); it != this->header.end(); it++ ) {
 	    result.append(it->first);

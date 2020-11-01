@@ -56,12 +56,14 @@ class Response {
 	public:
 		Response(int fd);
 		void PutHeader(string key, string val);
+		void SetStatus(int status);
 		int write(string data);
 		int write(char *data, int size);
 		~Response();
 	private:
 		int fd;
 		bool header_sent;
+		int status = 200;
 		map <string, string> header;
 
 		string Build();
