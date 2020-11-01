@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include "json.hpp"
 #include "chiphttp.h"
+#include "chipdrive.h"
 
 using json = nlohmann::json;
 
@@ -12,22 +13,24 @@ void serve_root(Request &request, Response &response);
 
 int main(int argc, char const *argv[]) {
 
+	ChipDrive cd = ChipDrive();
+
 	ChipHttp chttp = ChipHttp(8080);
 
 	chttp.route([](Request &request, Response &response) {
-		//if(request.path.compare("/api/v1/config") == 0) {
-		json j = {
-			{ "success", true },
-			{ "time", time(NULL) }
-		};
-		string data = j.dump(4);
+		if(request.path.compare("/api/v1/drive/config") == 0) {
+			json j = {
+				{ "success", true },
+				{ "time", time(NULL) }
+			};
+			string data = j.dump(4);
 
-		response.insert("Content-Length", to_string(data.size()));
-		response.insert("Content-Type", "application/json");
-		response.write(data);
-		//} else {
-		//	serve_root(request, response);
-		//}
+			response.PutHeader("Content-Length", to_string(data.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(data);
+		} else {
+			serve_root(request, response);
+		}
 	});
 
 	chttp.start();
@@ -77,8 +80,8 @@ void serve_root(Request &request, Response &response) {
 			int length = file.tellg();
 			file.seekg(0, file.beg);
 
-			response.insert("Content-Type", mime);
-			response.insert("Content-Length", to_string(length));
+			response.PutHeader("Content-Type", mime);
+			response.PutHeader("Content-Length", to_string(length));
 			char buf[8192 * 4];
 			while(!file.eof()) {
 				file.read(buf, sizeof(buf));
@@ -86,13 +89,12 @@ void serve_root(Request &request, Response &response) {
 			}
 		} catch (ifstream::failure &e) {
 			cout << e.what() << endl;
-			throw SocketClosedException();
 		}
 	} else {
 		string data = "404 Not Found";
 
-		response.insert("Content-Length", to_string(data.size()));
-		response.insert("Content-Type", "text/html");
+		response.PutHeader("Content-Length", to_string(data.size()));
+		response.PutHeader("Content-Type", "text/html");
 		response.write(data);
 	}
 

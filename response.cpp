@@ -9,7 +9,7 @@ Response::Response(int fd) {
 	this->header_sent = false;
 }
 
-void Response::insert(string key, string val) {
+void Response::PutHeader(string key, string val) {
 	auto const result = this->header.insert(pair<string, string>(key, val));
 	if (not result.second) { 
 		result.first->second = val; 
@@ -38,7 +38,7 @@ int Response::write(char *data, int size) {
 	if(this->header_sent == false) {
 		string header = this->build();
 		if(send(this->fd, header.c_str(), header.size(), 0) < 1) {
-			throw SocketClosedException();
+			throw IOException();
 		}
 		this->header_sent = true;
 	}
@@ -47,7 +47,7 @@ int Response::write(char *data, int size) {
 	written = send(this->fd, data, size, 0);
 
 	if(written < 1) {
-		throw SocketClosedException();
+		throw IOException();
 	}
 
 	return written;

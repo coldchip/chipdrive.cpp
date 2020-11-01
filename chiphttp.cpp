@@ -74,14 +74,14 @@ void ChipHttp::process(int fd) {
 			Request  request  = Request(fd);
 			Response response = Response(fd);
 
-			response.insert("Connection", "Keep-Alive");
-			response.insert("Content-Type", "text/plain");
-			response.insert("Keep-Alive", "timeout=5, max=1000");
-			response.insert("Server", "ColdChip API Server v2");
+			response.PutHeader("Connection", "Keep-Alive");
+			response.PutHeader("Content-Type", "text/plain");
+			response.PutHeader("Keep-Alive", "timeout=5, max=1000");
+			response.PutHeader("Server", "ColdChip API Server v2");
 
 			this->cb(request, response);
 		}
-	} catch(const SocketClosedException &e) {
+	} catch(const IOException &e) {
 		// this->log(string(e.what()));
 	} catch(const HeaderTooLargeException &e) {
 		// this->log(string(e.what()));

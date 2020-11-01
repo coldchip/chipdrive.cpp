@@ -14,21 +14,21 @@ using namespace std;
 typedef struct sockaddr_in SockAddrIn;
 typedef struct sockaddr SockAddr;
 
-struct SocketClosedException : public exception {
+struct IOException : public exception {
 	const char *what() const throw() {
-		return "ChipDrive SocketClosedException";
+		return "ChipHttp IOException";
 	}
 };
 
 struct HeaderTooLargeException : public exception {
 	const char *what() const throw() {
-		return "ChipDrive HeaderTooLargeException";
+		return "ChipHttp HeaderTooLargeException";
 	}
 };
 
 struct MalformedHeaderException : public exception {
 	const char *what() const throw() {
-		return "ChipDrive MalformedHeaderException";
+		return "ChipHttp MalformedHeaderException";
 	}
 };
 
@@ -38,6 +38,7 @@ class Request {
 		string path;
 
 		Request(int fd);
+		string GetHeader(string key);
 		int read(char *buf, int length);
 		~Request();
 	private:
@@ -50,7 +51,7 @@ class Request {
 class Response {
 	public:
 		Response(int fd);
-		void insert(string key, string val);
+		void PutHeader(string key, string val);
 		int write(string data);
 		int write(char *data, int size);
 		~Response();

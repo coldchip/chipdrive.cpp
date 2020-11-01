@@ -10,6 +10,14 @@ Request::Request(int fd) {
 	this->parse();
 }
 
+string Request::GetHeader(string key) {
+	map<string, string>::iterator kv = this->header.find(key);
+	if(kv != this->header.end()) {
+		return kv->second;
+	}
+	return "";
+}
+
 void Request::parse() {
 
 	string data = "";
@@ -57,7 +65,7 @@ int Request::read(char *buf, int length) {
 	int read = 0;
 	read = recv(this->fd, buf, length, 0);
 	if(read < 1) {
-		throw SocketClosedException();
+		throw IOException();
 	}
 	return read;
 }
