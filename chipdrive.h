@@ -3,6 +3,7 @@
 
 #include "json.hpp"
 #include "chiphttp.h"
+#include "filesystem.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -30,11 +31,9 @@ class ChipDrive {
 
 		void ServeConfig(Request &request, Response &response);
 		void ServeList(Request &request, Response &response);
+		void ServeCreateFolder(Request &request, Response &response);
+		void ServeUpload(Request &request, Response &response);
 		void ServeStream(Request &request, Response &response);
-};
-
-class ChipDriveAPI : ChipDrive {
-
 };
 
 #endif
