@@ -23,7 +23,6 @@ class ChipDrive {
 		// Internal Variables
 
 		// Internal Methods
-		static string Random(int len);
 		string MakeJSON(bool success, string reason, json data);
 
 		void Router(Request &request, Response &response);

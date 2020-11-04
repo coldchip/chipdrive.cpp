@@ -76,8 +76,10 @@ void Request::ParseHeader(string header) {
 				pair<string, string> kv = ChipHttp::SplitPair(*t, ":");
 				string key = ChipHttp::Trim(kv.first, " ");
 				string val = ChipHttp::Trim(kv.second, " ");
-				if(key.length() > 0 && val.length() > 0) {
-					this->header.insert(pair<string, string>(key, val));
+				string decoded_key = ChipHttp::URLDecode(key);
+				string decoded_val = ChipHttp::URLDecode(val);
+				if(decoded_key.length() > 0 && decoded_val.length() > 0) {
+					this->header.insert(pair<string, string>(decoded_key, decoded_val));
 				} else {
 					throw MalformedHeaderException();
 				}
@@ -94,7 +96,11 @@ void Request::ParseQuery(string query) {
 	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
 		if((*t).length() > 0) {
 			pair<string, string> kv = ChipHttp::SplitPair(*t, "=");
-			this->query.insert(kv);
+			string key = ChipHttp::URLDecode(kv.first);
+			string val = ChipHttp::URLDecode(kv.second);
+			if(key.length() > 0) {
+				this->query.insert(pair<string, string>(key, val));
+			}
 		}
 	}
 }

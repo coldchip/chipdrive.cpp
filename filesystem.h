@@ -11,9 +11,9 @@ using namespace std;
 
 typedef struct _Node {
 	int type;
-	char parent[256];
-	char name[256];
-	char id[256];
+	char parent[1024];
+	char name[1024];
+	char id[1024];
 } Node;
 
 typedef struct _Object {
@@ -23,9 +23,16 @@ typedef struct _Object {
 	string id;
 } Object;
 
+struct FileSystemException : public exception {
+	const char *what() const throw() {
+		return "FileSystemException";
+	}
+};
+
 class FileSystem {
 	public:
 		FileSystem();
+		static bool IsDir(string id);
 		static vector<Object> List(string id);
 		static Object CreateFile(string name, string parent);
 		static Object CreateFolder(string name, string parent);

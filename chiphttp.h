@@ -78,7 +78,8 @@ class ChipHttp {
 		static pair<string, string> SplitPair(string s, string delimiter);
 		static string CleanPath(string path);
 		static string Trim(string str, string whitespace);
-		static string GetMIME(string ext);
+		static string GetMIME(string &ext);
+		static string URLDecode(string &src);
 
 		ChipHttp();
 		ChipHttp(int port);

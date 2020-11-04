@@ -149,7 +149,7 @@ string ChipHttp::Trim(string str, string whitespace) {
 	return "";
 }
 
-string ChipHttp::GetMIME(string ext) {
+string ChipHttp::GetMIME(string &ext) {
 	string mime = "application/octet-stream";
 	if(ext.find(".html") != string::npos) {
 		mime = "text/html";
@@ -173,6 +173,25 @@ string ChipHttp::GetMIME(string ext) {
 		mime = "video/quicktime";
 	}
 	return mime;
+}
+
+string ChipHttp::URLDecode(string &src) {
+    string ret;
+    char ch;
+    string::size_type i; 
+    int ii;
+    for (i = 0; i < src.length(); i++) {
+        if(int(src[i]) == 37) {
+            if(sscanf(src.substr(i + 1, 2).c_str(), "%x", &ii) == 1) {
+            	ch = static_cast<char>(ii);
+            	ret += ch;
+            	i = i + 2;
+        	}
+        } else {
+            ret += src[i];
+        }
+    }
+    return(ret);
 }
 
 void ChipHttp::error(string data) {

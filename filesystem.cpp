@@ -4,39 +4,67 @@ FileSystem::FileSystem() {
 
 }
 
-vector<Object> FileSystem::List(string id) {
+bool FileSystem::IsDir(string id) {
+	if(id.compare("root") == 0) {
+		return true;
+	}
+
 	vector<Object> rootlist = FileSystem::Load();
-	vector<Object> list;
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
-		if(t->parent.compare(id) == 0) {
-			list.push_back(*t);
+		if(t->id.compare(id) == 0) {
+			if(t->type == 2) {
+				return true;
+			}
 		}
 	}
-	return list;
+	return false;
+}
+
+vector<Object> FileSystem::List(string id) {
+	if(FileSystem::IsDir(id)) {
+		vector<Object> rootlist = FileSystem::Load();
+		vector<Object> list;
+		for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
+			if(t->parent.compare(id) == 0) {
+				list.push_back(*t);
+			}
+		}
+		return list;
+	} else {
+		throw FileSystemException();
+	}
 }
 
 Object FileSystem::CreateFile(string name, string parent) {
-	vector<Object> rootlist = FileSystem::Load();
-	Object o;
-	o.type   = 1;
-	o.parent = parent;
-	o.name   = name;
-	o.id     = FileSystem::Random(64);
-	rootlist.push_back(o);
-	FileSystem::Save(rootlist);
-	return o;
+	if(FileSystem::IsDir(parent)) {
+		vector<Object> rootlist = FileSystem::Load();
+		Object o;
+		o.type   = 1;
+		o.parent = parent;
+		o.name   = name;
+		o.id     = FileSystem::Random(64);
+		rootlist.push_back(o);
+		FileSystem::Save(rootlist);
+		return o;
+	} else {
+		throw FileSystemException();
+	}
 }
 
 Object FileSystem::CreateFolder(string name, string parent) {
-	vector<Object> rootlist = FileSystem::Load();
-	Object o;
-	o.type   = 2;
-	o.parent = parent;
-	o.name   = name;
-	o.id     = FileSystem::Random(64);
-	rootlist.push_back(o);
-	FileSystem::Save(rootlist);
-	return o;
+	if(FileSystem::IsDir(parent)) {
+		vector<Object> rootlist = FileSystem::Load();
+		Object o;
+		o.type   = 2;
+		o.parent = parent;
+		o.name   = name;
+		o.id     = FileSystem::Random(64);
+		rootlist.push_back(o);
+		FileSystem::Save(rootlist);
+		return o;
+	} else {
+		throw FileSystemException();
+	}
 }
 
 string FileSystem::Random(int len) {

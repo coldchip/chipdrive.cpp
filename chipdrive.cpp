@@ -13,19 +13,6 @@ void ChipDrive::start()	{
 	this->chiphttp->start();
 }
 
-string ChipDrive::Random(int len) {
-	string tmp_s;
-	static const char alphanum[] =
-	"0123456789"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz";
-
-	for (int i = 0; i < len; ++i) {
-		tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-	}
-	return tmp_s;
-}
-
 void ChipDrive::Router(Request &request, Response &response) {
 	if(request.path.compare("/api/v1/drive/config") == 0) {
 		this->ServeConfig(request, response);
@@ -109,22 +96,30 @@ void ChipDrive::ServeList(Request &request, Response &response) {
 	string folderid = request.GetQuery("folderid");
 
 	if(folderid.length() > 0) {
-		vector<Object> list = FileSystem::List(folderid);
-		json config;
-		config["list"] = json::array();
-		for(auto t = list.begin(); t != list.end(); ++t) {
-			json item = {
-				{ "type", t->type },
-				{ "name", t->name },
-				{ "id", t->id }
-			};
-			config["list"].push_back(item);
-		}
-		string raw = this->MakeJSON(false, "", config);
+		try {
+			vector<Object> list = FileSystem::List(folderid);
+			json config;
+			config["list"] = json::array();
+			for(auto t = list.begin(); t != list.end(); ++t) {
+				json item = {
+					{ "type", t->type },
+					{ "name", t->name },
+					{ "id", t->id }
+				};
+				config["list"].push_back(item);
+			}
+			string raw = this->MakeJSON(false, "", config);
 
-		response.PutHeader("Content-Length", to_string(raw.size()));
-		response.PutHeader("Content-Type", "application/json");
-		response.write(raw);
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		} catch(FileSystemException &e) {
+			string raw = this->MakeJSON(true, e.what(), json());
+
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		}
 	} else {
 		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
 
@@ -139,12 +134,20 @@ void ChipDrive::ServeCreateFolder(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(folderid.length() > 0 && name.length() > 0) {
-		FileSystem::CreateFolder(name, folderid);
-		string raw = this->MakeJSON(false, "", json());
+		try {
+			FileSystem::CreateFolder(name, folderid);
+			string raw = this->MakeJSON(false, "", json());
 
-		response.PutHeader("Content-Length", to_string(raw.size()));
-		response.PutHeader("Content-Type", "application/json");
-		response.write(raw);
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		} catch(FileSystemException &e) {
+			string raw = this->MakeJSON(true, e.what(), json());
+
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		}
 	} else {
 		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
 
@@ -160,25 +163,33 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 	int length      = atoi(request.GetHeader("Content-Length").c_str());
 
 	if(folderid.length() > 0 && name.length() > 0 && length > 0) {
-		Object o = FileSystem::CreateFile(name, folderid);
-		string raw = this->MakeJSON(false, "", json());
+		try {
+			Object o = FileSystem::CreateFile(name, folderid);
+			string raw = this->MakeJSON(false, "", json());
 
-		FileStream fs;
+			FileStream fs;
 
-		if(fs.open("objects/" + o.id, "wb")) {
-			int i = 0;
-			int read = 0;
-			char buf[8192];
-			while(i < length) {
-				read = request.read(buf, sizeof(buf));
-				fs.write(buf, read);
-				i += read;
+			if(fs.open("objects/" + o.id, "wb")) {
+				int i = 0;
+				int read = 0;
+				char buf[8192];
+				while(i < length) {
+					read = request.read(buf, sizeof(buf));
+					fs.write(buf, read);
+					i += read;
+				}
 			}
-		}
 
-		response.PutHeader("Content-Length", to_string(raw.size()));
-		response.PutHeader("Content-Type", "application/json");
-		response.write(raw);
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		} catch(FileSystemException &e) {
+			string raw = this->MakeJSON(true, e.what(), json());
+
+			response.PutHeader("Content-Length", to_string(raw.size()));
+			response.PutHeader("Content-Type", "application/json");
+			response.write(raw);
+		}
 	} else {
 		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
 
