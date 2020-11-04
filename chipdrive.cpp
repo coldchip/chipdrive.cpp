@@ -1,4 +1,5 @@
 #include "chipdrive.h"
+#include "filestream.h"
 
 ChipDrive::ChipDrive(int port) {
 	this->chiphttp = new ChipHttp(port);
@@ -110,7 +111,7 @@ void ChipDrive::ServeList(Request &request, Response &response) {
 	if(folderid.length() > 0) {
 		vector<Object> list = FileSystem::List(folderid);
 		json config;
-		config["list"] = {};
+		config["list"] = json::array();
 		for(auto t = list.begin(); t != list.end(); ++t) {
 			json item = {
 				{ "type", t->type },
@@ -159,13 +160,20 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 	int length      = atoi(request.GetHeader("Content-Length").c_str());
 
 	if(folderid.length() > 0 && name.length() > 0 && length > 0) {
-		FileSystem::CreateFile(name, folderid);
+		Object o = FileSystem::CreateFile(name, folderid);
 		string raw = this->MakeJSON(false, "", json());
 
-		int i = 0;
-		char buf[8192];
-		while(i < length) {
-			i += request.read(buf, sizeof(buf));
+		FileStream fs;
+
+		if(fs.open("objects/" + o.id, "wb")) {
+			int i = 0;
+			int read = 0;
+			char buf[8192];
+			while(i < length) {
+				read = request.read(buf, sizeof(buf));
+				fs.write(buf, read);
+				i += read;
+			}
 		}
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
@@ -184,42 +192,37 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 	string id = request.GetQuery("id");
 
 	if(id.length() > 0) {
-		string path = "./objects/test.mp3";
-		ifstream file(path, ifstream::binary);
+		string path = "./objects/" + id;
+		FileStream fs;
+		if(fs.open(path, "rb") == true) {
+			fs.seek(0, SEEK_END);
+			int length = fs.tell();
 
-		if(file) {
-			file.exceptions(ifstream::badbit);
-			try {
-				file.seekg(0, file.end);
-				int length = file.tellg();
+			int start = 0;
+			int end = length - 1;
 
-				int start = 0;
-				int end = length - 1;
-
-				string range = request.GetHeader("Range");
-				if(range.length() > 0) {
-					sscanf(range.c_str(), "bytes=%i-%i", &start, &end);
-					response.PutHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(length));
-					response.SetStatus(206);
-				}
-
-				file.seekg(start);
-
-				string mime = ChipHttp::GetMIME(path);
-				response.PutHeader("Accept-Ranges", "bytes");
-				response.PutHeader("Content-Type", mime);
-				response.PutHeader("Content-Length", to_string((end - start) + 1));
-
-				char buf[8192 * 4];
-				for(int p = start; p < end; p += sizeof(buf)) {
-					int to_read = min((int)sizeof(buf), (int)(end - p) + 1);
-					file.read(buf, to_read);
-					response.write(buf, file.gcount());
-				}
-				file.close();
-			} catch (ifstream::failure &e) {
-				cout << e.what() << endl;
+			string range = request.GetHeader("Range");
+			if(range.length() > 0) {
+				sscanf(range.c_str(), "bytes=%i-%i", &start, &end);
+				response.PutHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(length));
+				response.SetStatus(206);
 			}
+
+			fs.seek(start, SEEK_SET);
+
+			string mime = ChipHttp::GetMIME(path);
+			response.PutHeader("Accept-Ranges", "bytes");
+			response.PutHeader("Content-Type", mime);
+			response.PutHeader("Content-Length", to_string((end - start) + 1));
+
+			char buf[8192 * 4];
+			int read = 0;
+			for(int p = start; p < end; p += sizeof(buf)) {
+				int to_read = min((int)sizeof(buf), (int)(end - p) + 1);
+				read = fs.read(buf, to_read);
+				response.write(buf, read);
+			}
+			fs.close();
 		} else {
 			string raw = this->MakeJSON(true, "Object Not Found", json());
 

@@ -36,5 +36,4 @@ class FileSystem {
 		static void Save(vector<Object> list);
 };
 
-
 #endif
