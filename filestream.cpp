@@ -20,6 +20,18 @@ int FileStream::seek(long int offset, int whence) {
 	return fseek(this->file, offset, whence);
 }
 
+int FileStream::eof() {
+	return feof(this->file);
+}
+
+long int FileStream::size() {
+	long int where = this->tell();
+	this->seek(0, SEEK_END);
+	long int size = this->tell();
+	this->seek(where, SEEK_SET);
+	return size;
+}
+
 int FileStream::read(char *buf, int length) {
 	return fread(buf, sizeof(char), length, this->file);
 }

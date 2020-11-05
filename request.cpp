@@ -11,17 +11,20 @@ Request::Request(int fd) {
 }
 
 string Request::GetHeader(string key) {
-	auto kv = this->header.find(key);
-	if(kv != this->header.end()) {
-		return kv->second;
+	// HTTP header names are case-insensitive, according to RFC 2616
+	for(auto &t : this->header) {
+		if(ChipHttp::stricmp(t.first, key) == 0) {
+			return t.second;
+		}
 	}
 	return "";
 }
 
 string Request::GetQuery(string key) {
-	auto kv = this->query.find(key);
-	if(kv != this->query.end()) {
-		return kv->second;
+	for(auto &t : this->query) {
+		if(t.first.compare(key) == 0) {
+			return t.second;
+		}
 	}
 	return "";
 }

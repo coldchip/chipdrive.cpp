@@ -194,6 +194,17 @@ string ChipHttp::URLDecode(string &src) {
     return(ret);
 }
 
+int ChipHttp::stricmp(const string &a, const string &b) {
+	const char *ac = a.c_str();
+	const char *bc = b.c_str();
+	for (;; ac++, bc++) {
+		int d = tolower((unsigned char)*ac) - tolower((unsigned char)*bc);
+		if (d != 0 || !*ac) {
+			return d;
+		}
+	}
+}
+
 void ChipHttp::error(string data) {
 	printf("ChipHttp::error [%s]\n", data.c_str());
 	exit(1);

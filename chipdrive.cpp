@@ -1,7 +1,7 @@
 #include "chipdrive.h"
-#include "filestream.h"
 
 ChipDrive::ChipDrive(int port) {
+	this->lock = new mutex();
 	this->chiphttp = new ChipHttp(port);
 
 	this->chiphttp->route([&](Request &request, Response &response) {
@@ -14,18 +14,36 @@ void ChipDrive::start()	{
 }
 
 void ChipDrive::Router(Request &request, Response &response) {
-	if(request.path.compare("/api/v1/drive/config") == 0) {
-		this->ServeConfig(request, response);
-	} else if(request.path.compare("/api/v1/drive/list") == 0) {
-		this->ServeList(request, response);
-	} else if(request.path.compare("/api/v1/drive/folder") == 0) {
-		this->ServeCreateFolder(request, response);
-	} else if(request.path.compare("/api/v1/drive/upload") == 0) {
-		this->ServeUpload(request, response);
-	} else if(request.path.compare("/api/v1/drive/stream") == 0) {
-		this->ServeStream(request, response);
-	} else {
-		this->ServeRoot(request, response);
+	try {
+		this->lock->lock();
+		cout << "#" + to_string(this->hits) + " Request: " << request.path << endl;
+		this->hits++;
+		this->lock->unlock();
+		if(request.path.compare("/api/v1/drive/config") == 0) {
+			this->ServeConfig(request, response);
+		} else if(request.path.compare("/api/v1/drive/list") == 0) {
+			this->ServeList(request, response);
+		} else if(request.path.compare("/api/v1/drive/folder") == 0) {
+			this->ServeCreateFolder(request, response);
+		} else if(request.path.compare("/api/v1/drive/upload") == 0) {
+			this->ServeUpload(request, response);
+		} else if(request.path.compare("/api/v1/drive/stream") == 0) {
+			this->ServeStream(request, response);
+		} else {
+			this->ServeRoot(request, response);
+		}
+	} catch(FileSystemException &e) {
+		string raw = this->MakeJSON(false, e.what(), json());
+
+		response.PutHeader("Content-Length", to_string(raw.size()));
+		response.PutHeader("Content-Type", "application/json");
+		response.write(raw);
+	} catch(ChipDriveException &e) {
+		string raw = this->MakeJSON(false, e.what(), json());
+
+		response.PutHeader("Content-Length", to_string(raw.size()));
+		response.PutHeader("Content-Type", "application/json");
+		response.write(raw);
 	}
 }
 
@@ -51,25 +69,18 @@ void ChipDrive::ServeRoot(Request &request, Response &response) {
 
 	string mime = ChipHttp::GetMIME(path);
 
-	ifstream file(path, ifstream::binary);
+	FileStream fs;
+	if(fs.open(path, "rb") == true) {
+		long int size = fs.size();
 
-	if(file) {
-		file.exceptions(ifstream::badbit);
-		try {
-			file.seekg(0, file.end);
-			int length = file.tellg();
-			file.seekg(0, file.beg);
-
-			response.PutHeader("Content-Type", mime);
-			response.PutHeader("Content-Length", to_string(length));
-			char buf[8192 * 4];
-			while(!file.eof()) {
-				file.read(buf, sizeof(buf));
-				response.write(buf, file.gcount());
-			}
-		} catch (ifstream::failure &e) {
-			cout << e.what() << endl;
+		response.PutHeader("Content-Type", mime);
+		response.PutHeader("Content-Length", to_string(size));
+		char buf[8192];
+		while(!fs.eof()) {
+			int read = fs.read(buf, sizeof(buf));
+			response.write(buf, read);
 		}
+		fs.close();
 	} else {
 		string data = "404 Not Found";
 
@@ -77,8 +88,6 @@ void ChipDrive::ServeRoot(Request &request, Response &response) {
 		response.PutHeader("Content-Type", "text/html");
 		response.write(data);
 	}
-
-	file.close();
 }
 
 void ChipDrive::ServeConfig(Request &request, Response &response) {
@@ -96,36 +105,24 @@ void ChipDrive::ServeList(Request &request, Response &response) {
 	string folderid = request.GetQuery("folderid");
 
 	if(folderid.length() > 0) {
-		try {
-			vector<Object> list = FileSystem::List(folderid);
-			json config;
-			config["list"] = json::array();
-			for(auto t = list.begin(); t != list.end(); ++t) {
-				json item = {
-					{ "type", t->type },
-					{ "name", t->name },
-					{ "id", t->id }
-				};
-				config["list"].push_back(item);
-			}
-			string raw = this->MakeJSON(false, "", config);
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
-		} catch(FileSystemException &e) {
-			string raw = this->MakeJSON(true, e.what(), json());
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
+		vector<Object> list = FileSystem::List(folderid);
+		json config;
+		config["list"] = json::array();
+		for(auto t = list.begin(); t != list.end(); ++t) {
+			json item = {
+				{ "type", t->type },
+				{ "name", t->name },
+				{ "id", t->id }
+			};
+			config["list"].push_back(item);
 		}
-	} else {
-		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
+		string raw = this->MakeJSON(false, "", config);
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
 		response.PutHeader("Content-Type", "application/json");
 		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
 	}
 }
 
@@ -134,26 +131,14 @@ void ChipDrive::ServeCreateFolder(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(folderid.length() > 0 && name.length() > 0) {
-		try {
-			FileSystem::CreateFolder(name, folderid);
-			string raw = this->MakeJSON(false, "", json());
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
-		} catch(FileSystemException &e) {
-			string raw = this->MakeJSON(true, e.what(), json());
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
-		}
-	} else {
-		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
+		FileSystem::CreateFolder(name, folderid);
+		string raw = this->MakeJSON(false, "", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
 		response.PutHeader("Content-Type", "application/json");
 		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
 	}
 }
 
@@ -163,39 +148,27 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 	int length      = atoi(request.GetHeader("Content-Length").c_str());
 
 	if(folderid.length() > 0 && name.length() > 0 && length > 0) {
-		try {
-			Object o = FileSystem::CreateFile(name, folderid);
-			string raw = this->MakeJSON(false, "", json());
+		Object o = FileSystem::CreateFile(name, folderid);
+		string raw = this->MakeJSON(false, "", json());
 
-			FileStream fs;
+		FileStream fs;
 
-			if(fs.open("objects/" + o.id, "wb")) {
-				int i = 0;
-				int read = 0;
-				char buf[8192];
-				while(i < length) {
-					read = request.read(buf, sizeof(buf));
-					fs.write(buf, read);
-					i += read;
-				}
+		if(fs.open("objects/" + o.id, "wb")) {
+			int i = 0;
+			int read = 0;
+			char buf[8192];
+			while(i < length) {
+				read = request.read(buf, sizeof(buf));
+				fs.write(buf, read);
+				i += read;
 			}
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
-		} catch(FileSystemException &e) {
-			string raw = this->MakeJSON(true, e.what(), json());
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
 		}
-	} else {
-		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
 		response.PutHeader("Content-Type", "application/json");
 		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
 	}
 }
 
@@ -203,25 +176,26 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 	string id = request.GetQuery("id");
 
 	if(id.length() > 0) {
+		Object o = FileSystem::GetByID(id);
+
 		string path = "./objects/" + id;
 		FileStream fs;
 		if(fs.open(path, "rb") == true) {
-			fs.seek(0, SEEK_END);
-			int length = fs.tell();
+			long int size = fs.size();
 
 			int start = 0;
-			int end = length - 1;
+			int end = size - 1;
 
 			string range = request.GetHeader("Range");
 			if(range.length() > 0) {
 				sscanf(range.c_str(), "bytes=%i-%i", &start, &end);
-				response.PutHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(length));
+				response.PutHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(size));
 				response.SetStatus(206);
 			}
 
 			fs.seek(start, SEEK_SET);
 
-			string mime = ChipHttp::GetMIME(path);
+			string mime = ChipHttp::GetMIME(o.name);
 			response.PutHeader("Accept-Ranges", "bytes");
 			response.PutHeader("Content-Type", mime);
 			response.PutHeader("Content-Length", to_string((end - start) + 1));
@@ -235,21 +209,14 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 			}
 			fs.close();
 		} else {
-			string raw = this->MakeJSON(true, "Object Not Found", json());
-
-			response.PutHeader("Content-Length", to_string(raw.size()));
-			response.PutHeader("Content-Type", "application/json");
-			response.write(raw);
+			throw ChipDriveException("Object Not Found");
 		}
 	} else {
-		string raw = this->MakeJSON(true, "Params Not Satisfiable", json());
-
-		response.PutHeader("Content-Length", to_string(raw.size()));
-		response.PutHeader("Content-Type", "application/json");
-		response.write(raw);
+		throw ChipDriveException("Params Not Satisfiable");
 	}
 }
 
 ChipDrive::~ChipDrive() {
+	delete this->lock;
 	delete this->chiphttp;
 }

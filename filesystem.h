@@ -6,14 +6,17 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include "filestream.h"
 
 using namespace std;
 
+#define ENTRY_SIZE 256
+
 typedef struct _Node {
 	int type;
-	char parent[1024];
-	char name[1024];
-	char id[1024];
+	char parent[ENTRY_SIZE];
+	char name[ENTRY_SIZE];
+	char id[ENTRY_SIZE];
 } Node;
 
 typedef struct _Object {
@@ -23,10 +26,16 @@ typedef struct _Object {
 	string id;
 } Object;
 
-struct FileSystemException : public exception {
-	const char *what() const throw() {
-		return "FileSystemException";
-	}
+class FileSystemException : public exception {
+	public:
+		FileSystemException(string msg) {
+			this->msg = msg;
+		}
+		const char *what() const throw() {
+			return this->msg.c_str();
+		}
+	private:
+		string msg;
 };
 
 class FileSystem {
@@ -36,6 +45,7 @@ class FileSystem {
 		static vector<Object> List(string id);
 		static Object CreateFile(string name, string parent);
 		static Object CreateFolder(string name, string parent);
+		static Object GetByID(string id);
 		~FileSystem();
 	private:
 		static string Random(int len);

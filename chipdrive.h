@@ -4,6 +4,8 @@
 #include "json.hpp"
 #include "chiphttp.h"
 #include "filesystem.h"
+#include "filestream.h"
+#include <mutex>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -11,6 +13,18 @@
 #include <ctime>
 
 using json = nlohmann::json;
+
+class ChipDriveException : public exception {
+	public:
+		ChipDriveException(string msg) {
+			this->msg = msg;
+		}
+		const char *what() const throw() {
+			return this->msg.c_str();
+		}
+	private:
+		string msg;
+};
 
 class ChipDrive {
 	public:
@@ -21,7 +35,8 @@ class ChipDrive {
 		// HTTP API Services
 		ChipHttp *chiphttp;
 		// Internal Variables
-
+		mutex *lock;
+		long int hits = 0;
 		// Internal Methods
 		string MakeJSON(bool success, string reason, json data);
 

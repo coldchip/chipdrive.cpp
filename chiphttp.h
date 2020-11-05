@@ -80,6 +80,7 @@ class ChipHttp {
 		static string Trim(string str, string whitespace);
 		static string GetMIME(string &ext);
 		static string URLDecode(string &src);
+		static int stricmp(const string &a, const string &b);
 
 		ChipHttp();
 		ChipHttp(int port);
