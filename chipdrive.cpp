@@ -109,7 +109,10 @@ void ChipDrive::ServeList(Request &request, Response &response) {
 	string folderid = request.GetQuery("folderid");
 
 	if(folderid.length() > 0) {
+		this->lock->lock();
 		vector<Object> list = FileSystem::List(folderid);
+		this->lock->unlock();
+
 		json config;
 		config["list"] = json::array();
 		for(auto t = list.begin(); t != list.end(); ++t) {
@@ -135,7 +138,10 @@ void ChipDrive::ServeCreateFolder(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(folderid.length() > 0 && name.length() > 0) {
+		this->lock->lock();
 		FileSystem::CreateFolder(name, folderid);
+		this->lock->unlock();
+
 		string raw = this->MakeJSON(false, "", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
@@ -151,7 +157,10 @@ void ChipDrive::ServeRename(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(itemid.length() > 0 && name.length() > 0) {
+		this->lock->lock();
 		FileSystem::Rename(name, itemid);
+		this->lock->unlock();
+
 		string raw = this->MakeJSON(false, "", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
@@ -166,7 +175,10 @@ void ChipDrive::ServeDelete(Request &request, Response &response) {
 	string itemid = request.GetQuery("itemid");
 
 	if(itemid.length() > 0) {
+		this->lock->lock();
 		FileSystem::Delete(itemid);
+		this->lock->unlock();
+
 		string raw = this->MakeJSON(false, "", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));
@@ -183,7 +195,10 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 	int length      = atoi(request.GetHeader("Content-Length").c_str());
 
 	if(folderid.length() > 0 && name.length() > 0 && length > 0) {
+		this->lock->lock();
 		Object o = FileSystem::CreateFile(name, folderid);
+		this->lock->unlock();
+
 		string raw = this->MakeJSON(false, "", json());
 
 		FileStream fs;
@@ -194,7 +209,9 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 			char buf[8192];
 			while(i < length) {
 				read = request.read(buf, sizeof(buf));
-				fs.write(buf, read);
+				if(fs.write(buf, read) != read) {
+					throw FileSystemException("Unable to Write to Object Further");
+				}
 				i += read;
 			}
 		}
@@ -211,7 +228,9 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 	string id = request.GetQuery("id");
 
 	if(id.length() > 0) {
+		this->lock->lock();
 		Object o = FileSystem::GetByID(id);
+		this->lock->unlock();
 
 		string path = "./objects/" + id;
 		FileStream fs;
