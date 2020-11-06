@@ -36,7 +36,7 @@ class ChipDrive {
 		ChipHttp *chiphttp;
 		// Internal Variables
 		mutex *lock;
-		long int hits = 0;
+		long int hits = 1;
 		// Internal Methods
 		string MakeJSON(bool success, string reason, json data);
 
@@ -46,6 +46,8 @@ class ChipDrive {
 		void ServeConfig(Request &request, Response &response);
 		void ServeList(Request &request, Response &response);
 		void ServeCreateFolder(Request &request, Response &response);
+		void ServeRename(Request &request, Response &response);
+		void ServeDelete(Request &request, Response &response);
 		void ServeUpload(Request &request, Response &response);
 		void ServeStream(Request &request, Response &response);
 };

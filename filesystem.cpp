@@ -75,6 +75,30 @@ Object FileSystem::CreateFolder(string name, string parent) {
 	}
 }
 
+Object FileSystem::Rename(string name, string id) {
+	vector<Object> rootlist = FileSystem::Load();
+	for(auto &t : rootlist) {
+		if(t.id == id) {
+			t.name = name;
+			FileSystem::Save(rootlist);
+			return t;
+		}
+	}
+	throw FileSystemException("Unable to Find Object");
+}
+
+Object FileSystem::Delete(string id) {
+	vector<Object> rootlist = FileSystem::Load();
+	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
+		if(t->id == id) {
+			rootlist.erase(t);
+			FileSystem::Save(rootlist);
+			return *t;
+		}
+	}
+	throw FileSystemException("Unable to Find Object");
+}
+
 Object FileSystem::GetByID(string id) {
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
@@ -82,7 +106,7 @@ Object FileSystem::GetByID(string id) {
 			return *t;
 		}
 	}
-	throw new FileSystemException("Object Not Found");
+	throw FileSystemException("Object Not Found");
 }
 
 string FileSystem::Random(int len) {

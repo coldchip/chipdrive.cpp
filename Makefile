@@ -1,11 +1,9 @@
 CC      := g++
 LD      := ld
-#CC      := arm-linux-gnueabihf-gcc
-#LD      := arm-linux-gnueabihf-ld
 BIN     := bin
 SRCS    := $(wildcard *.cpp)
 EXE     := $(BIN)/chipdrive
-CFLAGS  := -Wall -std=c++11 -Ofast
+CFLAGS  := -Wall -std=c++11 -Ofast -s
 LIBS    := -lpthread
 ifeq ($(OS),Windows_NT)
 	LIBS := $(LIBS) -lws2_32

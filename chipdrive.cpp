@@ -25,6 +25,10 @@ void ChipDrive::Router(Request &request, Response &response) {
 			this->ServeList(request, response);
 		} else if(request.path.compare("/api/v1/drive/folder") == 0) {
 			this->ServeCreateFolder(request, response);
+		} else if(request.path.compare("/api/v1/drive/rename") == 0) {
+			this->ServeRename(request, response);
+		} else if(request.path.compare("/api/v1/drive/delete") == 0) {
+			this->ServeDelete(request, response);
 		} else if(request.path.compare("/api/v1/drive/upload") == 0) {
 			this->ServeUpload(request, response);
 		} else if(request.path.compare("/api/v1/drive/stream") == 0) {
@@ -132,6 +136,37 @@ void ChipDrive::ServeCreateFolder(Request &request, Response &response) {
 
 	if(folderid.length() > 0 && name.length() > 0) {
 		FileSystem::CreateFolder(name, folderid);
+		string raw = this->MakeJSON(false, "", json());
+
+		response.PutHeader("Content-Length", to_string(raw.size()));
+		response.PutHeader("Content-Type", "application/json");
+		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
+	}
+}
+
+void ChipDrive::ServeRename(Request &request, Response &response) {
+	string itemid = request.GetQuery("itemid");
+	string name = request.GetQuery("name");
+
+	if(itemid.length() > 0 && name.length() > 0) {
+		FileSystem::Rename(name, itemid);
+		string raw = this->MakeJSON(false, "", json());
+
+		response.PutHeader("Content-Length", to_string(raw.size()));
+		response.PutHeader("Content-Type", "application/json");
+		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
+	}
+}
+
+void ChipDrive::ServeDelete(Request &request, Response &response) {
+	string itemid = request.GetQuery("itemid");
+
+	if(itemid.length() > 0) {
+		FileSystem::Delete(itemid);
 		string raw = this->MakeJSON(false, "", json());
 
 		response.PutHeader("Content-Length", to_string(raw.size()));

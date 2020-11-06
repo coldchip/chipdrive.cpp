@@ -45,6 +45,8 @@ class FileSystem {
 		static vector<Object> List(string id);
 		static Object CreateFile(string name, string parent);
 		static Object CreateFolder(string name, string parent);
+		static Object Rename(string name, string id);
+		static Object Delete(string id);
 		static Object GetByID(string id);
 		~FileSystem();
 	private:
