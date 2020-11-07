@@ -29,6 +29,15 @@ string Request::GetQuery(string key) {
 	return "";
 }
 
+string Request::GetCookie(string key) {
+	for(auto &t : this->cookie) {
+		if(t.first.compare(key) == 0) {
+			return t.second;
+		}
+	}
+	return "";
+}
+
 void Request::Parse() {
 
 	string data = "";
@@ -91,6 +100,11 @@ void Request::ParseHeader(string header) {
 			}
 		}
 	}
+
+	string cookie = this->GetHeader("Cookie");
+	if(cookie.length() > 0) {
+		this->ParseCookie(cookie);
+	}
 }
 
 void Request::ParseQuery(string query) {
@@ -103,6 +117,23 @@ void Request::ParseQuery(string query) {
 			string val = ChipHttp::URLDecode(kv.second);
 			if(key.length() > 0) {
 				this->query.insert(pair<string, string>(key, val));
+			}
+		}
+	}
+}
+
+void Request::ParseCookie(string cookie) {
+	vector<string> pairs = ChipHttp::SplitToken(cookie, ";");
+
+	for(auto t = pairs.begin(); t != pairs.end(); ++t) {
+		if((*t).length() > 0) {
+			pair<string, string> kv = ChipHttp::SplitPair(*t, "=");
+			string key = ChipHttp::Trim(kv.first, " ");
+			string val = ChipHttp::Trim(kv.second, " ");
+			string decoded_key = ChipHttp::URLDecode(key);
+			string decoded_val = ChipHttp::URLDecode(val);
+			if(decoded_key.length() > 0 && decoded_val.length() > 0) {
+				this->cookie.insert(pair<string, string>(decoded_key, decoded_val));
 			}
 		}
 	}

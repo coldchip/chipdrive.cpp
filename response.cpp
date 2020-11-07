@@ -9,8 +9,15 @@ Response::Response(int fd) {
 	this->header_sent = false;
 }
 
-void Response::PutHeader(string key, string val) {
+void Response::SetHeader(string key, string val) {
 	auto const result = this->header.insert(pair<string, string>(key, val));
+	if (not result.second) { 
+		result.first->second = val; 
+	}
+}
+
+void Response::SetCookie(string key, string val) {
+	auto const result = this->cookie.insert(pair<string, string>(key, val));
 	if (not result.second) { 
 		result.first->second = val; 
 	}
@@ -22,7 +29,6 @@ void Response::SetStatus(int status) {
 
 string Response::Build() {
 	string result;
-	string status_string = "HTTP/1.1 200 OK";
 	switch(this->status) {
 		case 200:
 			result.append("HTTP/1.1 200 OK");
@@ -30,19 +36,36 @@ string Response::Build() {
 		case 206:
 			result.append("HTTP/1.1 206 Partial Content");
 		break;
+		case 401:
+			result.append("HTTP/1.1 401 Unauthorized");
+		break;
 		case 404:
 			result.append("HTTP/1.1 404 Not Found");
 		break;
 		case 416:
 			result.append("HTTP/1.1 416 Requested Range Not Satisfiable");
 		break;
+		default:
+			result.append("HTTP/1.1 503 Service Temporarily Unavailable");
+		break;
 	}
 	result.append("\r\n");
-	for (map<string, string>::iterator it = this->header.begin(); it != this->header.end(); it++ ) {
-	    result.append(it->first);
-	    result.append(": ");
-	    result.append(it->second);
-	    result.append("\r\n");
+	for(auto it = this->header.begin(); it != this->header.end(); it++ ) {
+		result.append(it->first);
+		result.append(": ");
+		result.append(it->second);
+		result.append("\r\n");
+	}
+	for(auto it = this->cookie.begin(); it != this->cookie.end(); it++ ) {
+		if(it->first.length() > 0 && it->second.length() > 0) {
+			result.append("Set-Cookie");
+			result.append(": ");
+			result.append(it->first);
+			result.append("=");
+			result.append(it->second);
+			result.append(";");
+			result.append("\r\n");
+		}
 	}
 	result.append("\r\n");
 	return result;

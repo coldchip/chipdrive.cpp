@@ -74,10 +74,10 @@ void ChipHttp::process(int fd) {
 			Request  request  = Request(fd);
 			Response response = Response(fd);
 
-			response.PutHeader("Connection", "Keep-Alive");
-			response.PutHeader("Content-Type", "text/plain");
-			response.PutHeader("Keep-Alive", "timeout=5, max=1000");
-			response.PutHeader("Server", "ColdChip API Server v2");
+			response.SetHeader("Connection", "Keep-Alive");
+			response.SetHeader("Content-Type", "text/plain");
+			response.SetHeader("Keep-Alive", "timeout=5, max=1000");
+			response.SetHeader("Server", "ColdChip API Server v2");
 
 			this->cb(request, response);
 		}

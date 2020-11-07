@@ -43,6 +43,8 @@ class ChipDrive {
 		void Router(Request &request, Response &response);
 		void ServeRoot(Request &request, Response &response);
 
+		void ServeLogin(Request &request, Response &response);
+
 		void ServeConfig(Request &request, Response &response);
 		void ServeList(Request &request, Response &response);
 		void ServeCreateFolder(Request &request, Response &response);

@@ -40,22 +40,26 @@ class Request {
 		Request(int fd);
 		string GetHeader(string key);
 		string GetQuery(string key);
+		string GetCookie(string key);
 		int read(char *buf, int length);
 		~Request();
 	private:
 		int fd;
 		map <string, string> header;
 		map <string, string> query;
+		map <string, string> cookie;
 
 		void Parse();
 		void ParseHeader(string header);
 		void ParseQuery(string query);
+		void ParseCookie(string cookie);
 };
 
 class Response {
 	public:
 		Response(int fd);
-		void PutHeader(string key, string val);
+		void SetHeader(string key, string val);
+		void SetCookie(string key, string val);
 		void SetStatus(int status);
 		int write(string data);
 		int write(char *data, int size);
@@ -65,6 +69,7 @@ class Response {
 		bool header_sent;
 		int status = 200;
 		map <string, string> header;
+		map <string, string> cookie;
 
 		string Build();
 };
