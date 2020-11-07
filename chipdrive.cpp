@@ -351,7 +351,7 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 
 			string range = request.GetHeader("Range");
 			if(range.length() > 0) {
-				sscanf(range.c_str(), "bytes=%li-%li", &start, &end);
+				sscanf(range.c_str(), "bytes=%llu-%llu", &start, &end);
 				response.SetHeader("Content-Range", "bytes " + to_string(start) + "-" + to_string(end) + "/" + to_string(size));
 				response.SetStatus(206);
 			} else {
