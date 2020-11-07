@@ -44,7 +44,7 @@ class ChipDrive {
 		int auth_fd;
 		long int hits = 1;
 		// Internal Methods
-		bool auth(string otp);
+		bool auth(string username, string password);
 
 		string MakeJSON(bool success, string reason, json data);
 

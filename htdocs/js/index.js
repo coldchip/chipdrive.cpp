@@ -246,8 +246,8 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 }]);
 
 function LoginController($scope, $mdDialog, globals, init) {
-	$scope.showLogin = false;
-	$scope.showOtp = true;
+	$scope.showLogin = true;
+	$scope.showOtp = false;
 	$scope.toggle = () => {
 		$scope.showOtp = !$scope.showOtp;
 		$scope.showLogin = !$scope.showLogin;

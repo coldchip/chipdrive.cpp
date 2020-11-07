@@ -84,6 +84,8 @@ class ChipHttp {
 		static string CleanPath(string path);
 		static string Trim(string str, string whitespace);
 		static string GetMIME(string &ext);
+		static void HexChar(unsigned char c, unsigned char &hex1, unsigned char &hex2);
+		static string URLEncode(string &src);
 		static string URLDecode(string &src);
 		static int stricmp(const string &a, const string &b);
 

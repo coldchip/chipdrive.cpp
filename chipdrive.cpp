@@ -20,34 +20,41 @@ static size_t curl_write_cb_string(void *contents, size_t size, size_t nmemb, vo
 	return size * nmemb;
 }
 
-bool ChipDrive::auth(string otp) {
-	CURL *curl;
-	CURLcode res_code;
-
-	curl = curl_easy_init();
+bool ChipDrive::auth(string username, string password) {
+	CURL *curl = curl_easy_init();
 	if(curl) {
 		string nounce = Session::Random(256);
+
+		string api_key = "C769na3nGgK7aFzsr2kNAcZFtW8RDbgm";
 
 		string req;
 		req.append("api_key");
 		req.append("=");
-		req.append("C769na3nGgK7aFzsr2kNAcZFtW8RDbgm");
+		req.append(ChipHttp::URLEncode(api_key));
 		req.append("&");
-		req.append("otp");
+		req.append("mode");
 		req.append("=");
-		req.append(otp);
+		req.append("login");
+		req.append("&");
+		req.append("username");
+		req.append("=");
+		req.append(ChipHttp::URLEncode(username));
+		req.append("&");
+		req.append("password");
+		req.append("=");
+		req.append(ChipHttp::URLEncode(password));
 		req.append("&");
 		req.append("nounce");
 		req.append("=");
-		req.append(nounce);
+		req.append(ChipHttp::URLEncode(nounce));
 
 		string res;
-		curl_easy_setopt(curl, CURLOPT_URL, "https://auth.coldchip.ru");
+		curl_easy_setopt(curl, CURLOPT_URL, "http://auth.localhost");
 		curl_easy_setopt(curl, CURLOPT_POST, 1L);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb_string);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
-		res_code = curl_easy_perform(curl);
+		curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
 
 		if(res.compare(nounce) == 0) {
@@ -80,7 +87,7 @@ void ChipDrive::Router(Request &request, Response &response) {
 
 		this->lock->unlock();
 		
-		if(request.path.compare("/api/v1/loginotp") == 0) {
+		if(request.path.compare("/api/v1/login") == 0) {
 			this->ServeLogin(request, response);
 		} else if(request.path.compare("/api/v1/drive/config") == 0) {
 			if(validation == true) {
@@ -150,9 +157,10 @@ void ChipDrive::Router(Request &request, Response &response) {
 }
 
 void ChipDrive::ServeLogin(Request &request, Response &response) {
-	string otp = request.GetQuery("otp");
+	string username = request.GetQuery("username");
+	string password = request.GetQuery("password");
 
-	bool success = this->auth(otp);
+	bool success = this->auth(username, password);
 
 	if(success == true) {
 		string raw = this->MakeJSON(true, "", json());
@@ -166,7 +174,7 @@ void ChipDrive::ServeLogin(Request &request, Response &response) {
 		response.SetHeader("Content-Type", "application/json");
 		response.write(raw);
 	} else {
-		throw ChipDriveException("Invalid OTP");
+		throw ChipDriveException("Invalid Username or Password");
 	}
 }
 
@@ -344,10 +352,10 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 		string path = "./objects/" + id;
 		FileStream fs;
 		if(fs.open(path, "rb") == true) {
-			uint64_t size = fs.size();
+			long long size = fs.size();
 
-			uint64_t start = 0;
-			uint64_t end = size - 1;
+			long long start = 0;
+			long long end = size - 1;
 
 			string range = request.GetHeader("Range");
 			if(range.length() > 0) {
@@ -370,9 +378,9 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 			response.SetHeader("Content-Length", to_string((end - start) + 1));
 
 			char buf[8192 * 4];
-			uint64_t read = 0;
-			for(uint64_t p = start; p < end; p += sizeof(buf)) {
-				uint64_t to_read = min((int)sizeof(buf), (int)(end - p) + 1);
+			long long read = 0;
+			for(long long p = start; p < end; p += sizeof(buf)) {
+				long long to_read = min((int)sizeof(buf), (int)(end - p) + 1);
 				read = fs.read(buf, to_read);
 				if(read != to_read) {
 					throw FileSystemException("Unable to Read Object");
