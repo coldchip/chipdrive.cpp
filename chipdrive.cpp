@@ -3,6 +3,7 @@
 ChipDrive::ChipDrive(int port) {
 	this->lock = new mutex();
 	this->chiphttp = new ChipHttp(port);
+	this->session = new Session();
 
 	this->chiphttp->route([&](Request &request, Response &response) {
 		this->Router(request, response);
@@ -14,61 +15,117 @@ void ChipDrive::start()	{
 	this->chiphttp->start();
 }
 
+static size_t curl_write_cb_string(void *contents, size_t size, size_t nmemb, void *userp) {
+	((std::string*)userp)->append((char*)contents, size * nmemb);
+	return size * nmemb;
+}
+
+bool ChipDrive::auth(string otp) {
+	CURL *curl;
+	CURLcode res_code;
+
+	curl = curl_easy_init();
+	if(curl) {
+		string nounce = Session::Random(256);
+
+		string req;
+		req.append("api_key");
+		req.append("=");
+		req.append("C769na3nGgK7aFzsr2kNAcZFtW8RDbgm");
+		req.append("&");
+		req.append("otp");
+		req.append("=");
+		req.append(otp);
+		req.append("&");
+		req.append("nounce");
+		req.append("=");
+		req.append(nounce);
+
+		string res;
+		curl_easy_setopt(curl, CURLOPT_URL, "https://auth.coldchip.ru");
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req.c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb_string);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
+		res_code = curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+
+		if(res.compare(nounce) == 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+string ChipDrive::MakeJSON(bool success, string reason, json data) {
+	json stub = {
+		{ "success", success },
+		{ "reason", reason },
+		{ "data", data }
+	};
+	string res = stub.dump(4);
+	return res;
+}
+
 void ChipDrive::Router(Request &request, Response &response) {
 	try {
 		this->lock->lock();
+
 		cout << "#" + to_string(this->hits) + " Request: " << request.path << endl;
 		this->hits++;
-		this->lock->unlock();
 
 		string token = request.GetCookie("token");
+		bool validation = session->ValidateToken(token);
+
+		this->lock->unlock();
 		
 		if(request.path.compare("/api/v1/loginotp") == 0) {
 			this->ServeLogin(request, response);
 		} else if(request.path.compare("/api/v1/drive/config") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeConfig(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/list") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeList(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/folder") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeCreateFolder(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/rename") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeRename(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/delete") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeDelete(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/upload") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeUpload(request, response);
 			} else {
 				response.SetStatus(401);
 				throw ChipDriveException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/stream") == 0) {
-			if(token.length() > 0 && token.compare("12345678") == 0) {
+			if(validation == true) {
 				this->ServeStream(request, response);
 			} else {
 				response.SetStatus(401);
@@ -92,14 +149,25 @@ void ChipDrive::Router(Request &request, Response &response) {
 	}
 }
 
-string ChipDrive::MakeJSON(bool success, string reason, json data) {
-	json stub = {
-		{ "success", success },
-		{ "reason", reason },
-		{ "data", data }
-	};
-	string res = stub.dump(4);
-	return res;
+void ChipDrive::ServeLogin(Request &request, Response &response) {
+	string otp = request.GetQuery("otp");
+
+	bool success = this->auth(otp);
+
+	if(success == true) {
+		string raw = this->MakeJSON(true, "", json());
+
+		this->lock->lock();
+		string token = session->GenerateToken();
+		this->lock->unlock();
+
+		response.SetCookie("token", token);
+		response.SetHeader("Content-Length", to_string(raw.size()));
+		response.SetHeader("Content-Type", "application/json");
+		response.write(raw);
+	} else {
+		throw ChipDriveException("Invalid OTP");
+	}
 }
 
 void ChipDrive::ServeRoot(Request &request, Response &response) {
@@ -132,21 +200,6 @@ void ChipDrive::ServeRoot(Request &request, Response &response) {
 		response.SetHeader("Content-Length", to_string(data.size()));
 		response.SetHeader("Content-Type", "text/html");
 		response.write(data);
-	}
-}
-
-void ChipDrive::ServeLogin(Request &request, Response &response) {
-	string otp = request.GetQuery("otp");
-
-	if(otp.compare("lol") == 0) {
-		string raw = this->MakeJSON(true, "", json());
-
-		response.SetCookie("token", "12345678");
-		response.SetHeader("Content-Length", to_string(raw.size()));
-		response.SetHeader("Content-Type", "application/json");
-		response.write(raw);
-	} else {
-		throw ChipDriveException("Invalid OTP");
 	}
 }
 
@@ -336,6 +389,7 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 }
 
 ChipDrive::~ChipDrive() {
+	delete this->session;
 	delete this->lock;
 	delete this->chiphttp;
 }
