@@ -49,7 +49,7 @@ bool ChipDrive::auth(string username, string password) {
 		req.append(ChipHttp::URLEncode(nounce));
 
 		string res;
-		curl_easy_setopt(curl, CURLOPT_URL, "http://auth.localhost");
+		curl_easy_setopt(curl, CURLOPT_URL, "https://auth.coldchip.ru");
 		curl_easy_setopt(curl, CURLOPT_POST, 1L);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb_string);
