@@ -4,7 +4,10 @@ FileSystem::FileSystem() {
 
 }
 
-bool FileSystem::IsDir(string id) {
+bool FileSystem::IsDir(string id, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
 	if(id.compare("root") == 0) {
 		return true;
 	}
@@ -20,8 +23,11 @@ bool FileSystem::IsDir(string id) {
 	return false;
 }
 
-vector<Object> FileSystem::List(string id) {
-	if(FileSystem::IsDir(id)) {
+vector<Object> FileSystem::List(string id, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
+	if(FileSystem::IsDir(id, NULL)) {
 		vector<Object> rootlist = FileSystem::Load();
 		vector<Object> list;
 		for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
@@ -35,9 +41,12 @@ vector<Object> FileSystem::List(string id) {
 	}
 }
 
-Object FileSystem::CreateFile(string name, string parent) {
-	if(FileSystem::IsDir(parent)) {
-		if(FileSystem::IsDir(parent)) {
+Object FileSystem::CreateFile(string name, string parent, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
+	if(FileSystem::IsDir(parent, NULL)) {
+		if(name.length() < ENTRY_SIZE) {
 			vector<Object> rootlist = FileSystem::Load();
 			Object o;
 			o.type   = 1;
@@ -55,8 +64,11 @@ Object FileSystem::CreateFile(string name, string parent) {
 	}
 }
 
-Object FileSystem::CreateFolder(string name, string parent) {
-	if(FileSystem::IsDir(parent)) {
+Object FileSystem::CreateFolder(string name, string parent, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
+	if(FileSystem::IsDir(parent, NULL)) {
 		if(name.length() < ENTRY_SIZE) {
 			vector<Object> rootlist = FileSystem::Load();
 			Object o;
@@ -75,7 +87,10 @@ Object FileSystem::CreateFolder(string name, string parent) {
 	}
 }
 
-Object FileSystem::Rename(string name, string id) {
+Object FileSystem::Rename(string name, string id, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto &t : rootlist) {
 		if(t.id == id) {
@@ -87,7 +102,10 @@ Object FileSystem::Rename(string name, string id) {
 	throw FileSystemException("Unable to Find Object");
 }
 
-Object FileSystem::Delete(string id) {
+Object FileSystem::Delete(string id, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
 		if(t->id == id) {
@@ -99,7 +117,10 @@ Object FileSystem::Delete(string id) {
 	throw FileSystemException("Unable to Find Object");
 }
 
-Object FileSystem::GetByID(string id) {
+Object FileSystem::GetByID(string id, mutex *lock_) {
+	mutex dummy_mutex;
+	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
 		if(t->id.compare(id) == 0) {

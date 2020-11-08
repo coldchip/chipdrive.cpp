@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <mutex>
+
 #include "filestream.h"
 
 using namespace std;
@@ -41,13 +43,13 @@ class FileSystemException : public exception {
 class FileSystem {
 	public:
 		FileSystem();
-		static bool IsDir(string id);
-		static vector<Object> List(string id);
-		static Object CreateFile(string name, string parent);
-		static Object CreateFolder(string name, string parent);
-		static Object Rename(string name, string id);
-		static Object Delete(string id);
-		static Object GetByID(string id);
+		static bool IsDir(string id, mutex *lock_);
+		static vector<Object> List(string id, mutex *lock_);
+		static Object CreateFile(string name, string parent, mutex *lock_);
+		static Object CreateFolder(string name, string parent, mutex *lock_);
+		static Object Rename(string name, string id, mutex *lock_);
+		static Object Delete(string id, mutex *lock_);
+		static Object GetByID(string id, mutex *lock_);
 		~FileSystem();
 	private:
 		static string Random(int len);

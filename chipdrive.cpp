@@ -15,54 +15,8 @@ void ChipDrive::start()	{
 	this->chiphttp->start();
 }
 
-static size_t curl_write_cb_string(void *contents, size_t size, size_t nmemb, void *userp) {
-	((std::string*)userp)->append((char*)contents, size * nmemb);
-	return size * nmemb;
-}
-
 bool ChipDrive::auth(string username, string password) {
-	CURL *curl = curl_easy_init();
-	if(curl) {
-		string nounce = Session::Random(256);
-
-		string api_key = "C769na3nGgK7aFzsr2kNAcZFtW8RDbgm";
-
-		string req;
-		req.append("api_key");
-		req.append("=");
-		req.append(ChipHttp::URLEncode(api_key));
-		req.append("&");
-		req.append("mode");
-		req.append("=");
-		req.append("login");
-		req.append("&");
-		req.append("username");
-		req.append("=");
-		req.append(ChipHttp::URLEncode(username));
-		req.append("&");
-		req.append("password");
-		req.append("=");
-		req.append(ChipHttp::URLEncode(password));
-		req.append("&");
-		req.append("nounce");
-		req.append("=");
-		req.append(ChipHttp::URLEncode(nounce));
-
-		string res;
-		curl_easy_setopt(curl, CURLOPT_URL, "https://auth.coldchip.ru");
-		curl_easy_setopt(curl, CURLOPT_POST, 1L);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req.c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb_string);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
-		curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
-
-		if(res.compare(nounce) == 0) {
-			return true;
-		}
-	}
-
-	return false;
+	return true;
 }
 
 string ChipDrive::MakeJSON(bool success, string reason, json data) {
@@ -78,14 +32,12 @@ string ChipDrive::MakeJSON(bool success, string reason, json data) {
 void ChipDrive::Router(Request &request, Response &response) {
 	try {
 		this->lock->lock();
-
 		cout << "#" + to_string(this->hits) + " Request: " << request.path << endl;
 		this->hits++;
+		this->lock->unlock();
 
 		string token = request.GetCookie("token");
-		bool validation = session->ValidateToken(token);
-
-		this->lock->unlock();
+		bool validation = session->ValidateToken(token, this->lock);
 		
 		if(request.path.compare("/api/v1/login") == 0) {
 			this->ServeLogin(request, response);
@@ -93,50 +45,43 @@ void ChipDrive::Router(Request &request, Response &response) {
 			if(validation == true) {
 				this->ServeConfig(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/list") == 0) {
 			if(validation == true) {
 				this->ServeList(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/folder") == 0) {
 			if(validation == true) {
 				this->ServeCreateFolder(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/rename") == 0) {
 			if(validation == true) {
 				this->ServeRename(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/delete") == 0) {
 			if(validation == true) {
 				this->ServeDelete(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/upload") == 0) {
 			if(validation == true) {
 				this->ServeUpload(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else if(request.path.compare("/api/v1/drive/stream") == 0) {
 			if(validation == true) {
 				this->ServeStream(request, response);
 			} else {
-				response.SetStatus(401);
-				throw ChipDriveException("Auth Required");
+				throw ChipDriveAuthException("Auth Required");
 			}
 		} else {
 			this->ServeRoot(request, response);
@@ -153,6 +98,13 @@ void ChipDrive::Router(Request &request, Response &response) {
 		response.SetHeader("Content-Length", to_string(raw.size()));
 		response.SetHeader("Content-Type", "application/json");
 		response.write(raw);
+	} catch(ChipDriveAuthException &e) {
+		string raw = this->MakeJSON(false, e.what(), json());
+
+		response.SetStatus(401);
+		response.SetHeader("Content-Length", to_string(raw.size()));
+		response.SetHeader("Content-Type", "application/json");
+		response.write(raw);
 	}
 }
 
@@ -165,9 +117,7 @@ void ChipDrive::ServeLogin(Request &request, Response &response) {
 	if(success == true) {
 		string raw = this->MakeJSON(true, "", json());
 
-		this->lock->lock();
-		string token = session->GenerateToken();
-		this->lock->unlock();
+		string token = session->GenerateToken(this->lock);
 
 		response.SetCookie("token", token);
 		response.SetHeader("Content-Length", to_string(raw.size()));
@@ -226,9 +176,7 @@ void ChipDrive::ServeList(Request &request, Response &response) {
 	string folderid = request.GetQuery("folderid");
 
 	if(folderid.length() > 0) {
-		this->lock->lock();
-		vector<Object> list = FileSystem::List(folderid);
-		this->lock->unlock();
+		vector<Object> list = FileSystem::List(folderid, this->lock);
 
 		json config;
 		config["list"] = json::array();
@@ -255,9 +203,7 @@ void ChipDrive::ServeCreateFolder(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(folderid.length() > 0 && name.length() > 0) {
-		this->lock->lock();
-		FileSystem::CreateFolder(name, folderid);
-		this->lock->unlock();
+		FileSystem::CreateFolder(name, folderid, this->lock);
 
 		string raw = this->MakeJSON(true, "", json());
 
@@ -274,9 +220,7 @@ void ChipDrive::ServeRename(Request &request, Response &response) {
 	string name = request.GetQuery("name");
 
 	if(itemid.length() > 0 && name.length() > 0) {
-		this->lock->lock();
-		FileSystem::Rename(name, itemid);
-		this->lock->unlock();
+		FileSystem::Rename(name, itemid, this->lock);
 
 		string raw = this->MakeJSON(true, "", json());
 
@@ -292,9 +236,7 @@ void ChipDrive::ServeDelete(Request &request, Response &response) {
 	string itemid = request.GetQuery("itemid");
 
 	if(itemid.length() > 0) {
-		this->lock->lock();
-		FileSystem::Delete(itemid);
-		this->lock->unlock();
+		FileSystem::Delete(itemid, this->lock);
 
 		string raw = this->MakeJSON(true, "", json());
 
@@ -312,9 +254,7 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 	int length      = atoi(request.GetHeader("Content-Length").c_str());
 
 	if(folderid.length() > 0 && name.length() > 0 && length > 0) {
-		this->lock->lock();
-		Object o = FileSystem::CreateFile(name, folderid);
-		this->lock->unlock();
+		Object o = FileSystem::CreateFile(name, folderid, this->lock);
 
 		FileStream fs;
 
@@ -345,9 +285,7 @@ void ChipDrive::ServeStream(Request &request, Response &response) {
 	string id = request.GetQuery("id");
 
 	if(id.length() > 0) {
-		this->lock->lock();
-		Object o = FileSystem::GetByID(id);
-		this->lock->unlock();
+		Object o = FileSystem::GetByID(id, this->lock);
 
 		string path = "./objects/" + id;
 		FileStream fs;

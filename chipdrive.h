@@ -8,7 +8,7 @@
 #include <fstream>
 #include <ctime>
 
-#include <curl/curl.h>
+#include <unistd.h>
 
 #include "json.hpp"
 #include "chiphttp.h"
@@ -17,6 +17,18 @@
 #include "session.h"
 
 using json = nlohmann::json;
+
+class ChipDriveAuthException : public exception {
+	public:
+		ChipDriveAuthException(string msg) {
+			this->msg = msg;
+		}
+		const char *what() const throw() {
+			return this->msg.c_str();
+		}
+	private:
+		string msg;
+};
 
 class ChipDriveException : public exception {
 	public:
