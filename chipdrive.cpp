@@ -16,7 +16,10 @@ void ChipDrive::start()	{
 }
 
 bool ChipDrive::auth(string username, string password) {
-	return true;
+	if(username.compare("coldchip") == 0 && password.compare("CHHfV2JFXyUXPnPfLGxrkuhpuHBXect4") == 0) {
+		return true;
+	}
+	return false;
 }
 
 string ChipDrive::MakeJSON(bool success, string reason, json data) {
