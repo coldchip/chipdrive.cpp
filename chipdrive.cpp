@@ -12,6 +12,7 @@ ChipDrive::ChipDrive(int port) {
 
 void ChipDrive::start()	{
 	cout << "ChipDrive C++" << endl;
+	cout << "Version: 1.0.0 beta 1" << endl;
 	this->chiphttp->start();
 }
 
@@ -111,13 +112,75 @@ void ChipDrive::Router(Request &request, Response &response) {
 	}
 }
 
+char *ChipDrive::GetTarFile(string path, long long *size) {
+	path = ChipHttp::CleanPath(path);
+
+	extern char _binary_bin_tmp_rootdocs_tar_start[];
+	extern char _binary_bin_tmp_rootdocs_tar_end[];
+
+	char *root_start = _binary_bin_tmp_rootdocs_tar_start;
+	char *root_end   = _binary_bin_tmp_rootdocs_tar_end;
+
+    char *p = root_start;
+
+    while(p <= root_end) {
+    	TarHeader *header = (TarHeader*)p;
+
+		long long blob_size = 0;
+		int read = sscanf(header->size, "%llo", &blob_size);
+		string name = string(header->name);
+        if(path.compare(name) == 0 && path.length() > 0 && read == 1 && (header->typeflag & 0xFF) == 48) {
+        	p += 512; // skip header
+        	*size = blob_size;
+        	return p;
+        }
+
+        p += (1 + blob_size / 512) * 512;
+		if((blob_size % 512) > 0) {
+			p += 512;
+		}
+    }
+    return NULL;
+}
+
+void ChipDrive::ServeRoot(Request &request, Response &response) {
+	string path = ChipHttp::CleanPath(request.path);
+
+	long long size;
+	char *p = this->GetTarFile((char*)path.c_str(), &size);
+
+	if(!p) {
+		path.append("/index.html");
+		p = this->GetTarFile((char*)path.c_str(), &size);
+	}
+
+	string mime = ChipHttp::GetMIME(path);
+
+	if(p) {
+		response.SetHeader("Content-Type", mime);
+		response.SetHeader("Content-Length", to_string(size));
+		int chunk_size = 8192;
+		char *p_start = p;
+		char *p_end   = p + size;
+		while(p_start < p_end) {
+			int to_write = min((long long)chunk_size, (long long)(p_end - p_start));
+			int written = response.write(p_start, to_write);
+			p_start += written;
+		}
+	} else {
+		string data = "404 Not Found";
+
+		response.SetHeader("Content-Length", to_string(data.size()));
+		response.SetHeader("Content-Type", "text/html");
+		response.write(data);
+	}
+}
+
 void ChipDrive::ServeLogin(Request &request, Response &response) {
 	string username = request.GetQuery("username");
 	string password = request.GetQuery("password");
 
-	bool success = this->auth(username, password);
-
-	if(success == true) {
+	if(this->auth(username, password) == true) {
 		string raw = this->MakeJSON(true, "", json());
 
 		string token = session->GenerateToken(this->lock);
@@ -128,39 +191,6 @@ void ChipDrive::ServeLogin(Request &request, Response &response) {
 		response.write(raw);
 	} else {
 		throw ChipDriveException("Invalid Username or Password");
-	}
-}
-
-void ChipDrive::ServeRoot(Request &request, Response &response) {
-	string path = "./htdocs/bin/" + ChipHttp::CleanPath(request.path);
-
-	struct stat path_stat;
-	stat(path.c_str(), &path_stat);
-
-	if(!S_ISREG(path_stat.st_mode)) {
-		path.append("/index.html");
-	}
-
-	string mime = ChipHttp::GetMIME(path);
-
-	FileStream fs;
-	if(fs.open(path, "rb") == true) {
-		long int size = fs.size();
-
-		response.SetHeader("Content-Type", mime);
-		response.SetHeader("Content-Length", to_string(size));
-		char buf[8192];
-		while(!fs.eof()) {
-			int read = fs.read(buf, sizeof(buf));
-			response.write(buf, read);
-		}
-		fs.close();
-	} else {
-		string data = "404 Not Found";
-
-		response.SetHeader("Content-Length", to_string(data.size()));
-		response.SetHeader("Content-Type", "text/html");
-		response.write(data);
 	}
 }
 

@@ -247,36 +247,11 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 
 function LoginController($scope, $mdDialog, globals, init) {
 	$scope.showLogin = true;
-	$scope.showOtp = false;
-	$scope.toggle = () => {
-		$scope.showOtp = !$scope.showOtp;
-		$scope.showLogin = !$scope.showLogin;
-	};
 	$scope.login = () => {
 		$scope.errorText = "Logging In...";
 		globals.send(globals.urlf("/api/v1/login", {
 			"username": $scope.username, 
 			"password": $scope.password,
-			"time"    : Math.floor(new Date().getTime() / 1000)
-		}), null, null)
-		.then((e) => {
-			var json = JSON.parse(e);
-			if(json.success == true) {
-				$mdDialog.cancel();
-				init();
-			} else {
-				$scope.errorText = json.reason;
-				$scope.$apply();
-			}
-		}).catch((e) => {
-			$scope.errorText = e;
-			$scope.$apply();
-		});
-	}
-	$scope.loginotp = () => {
-		$scope.errorText = "Logging In...";
-		globals.send(globals.urlf("/api/v1/loginotp", {
-			"otp": $scope.otp,
 			"time"    : Math.floor(new Date().getTime() / 1000)
 		}), null, null)
 		.then((e) => {

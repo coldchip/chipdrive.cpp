@@ -5,8 +5,7 @@ Session::Session() {
 }
 
 bool Session::ValidateToken(string token, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::lock_guard<std::mutex> lock(*lock_);
 	
 	for(auto &t : this->tokens) {
 		if(t.compare(token) == 0 && token.length() > 0) {
@@ -17,8 +16,7 @@ bool Session::ValidateToken(string token, mutex *lock_) {
 }
 
 string Session::GenerateToken(mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::lock_guard<std::mutex> lock(*lock_);
 
 	string random = this->Random(64);
 	this->tokens.push_back(random);

@@ -5,8 +5,7 @@ FileSystem::FileSystem() {
 }
 
 bool FileSystem::IsDir(string id, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
 	if(id.compare("root") == 0) {
 		return true;
@@ -24,10 +23,10 @@ bool FileSystem::IsDir(string id, mutex *lock_) {
 }
 
 vector<Object> FileSystem::List(string id, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
-	if(FileSystem::IsDir(id, NULL)) {
+	mutex dummy_lock;
+	if(FileSystem::IsDir(id, &dummy_lock)) {
 		vector<Object> rootlist = FileSystem::Load();
 		vector<Object> list;
 		for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
@@ -42,10 +41,10 @@ vector<Object> FileSystem::List(string id, mutex *lock_) {
 }
 
 Object FileSystem::CreateFile(string name, string parent, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
-	if(FileSystem::IsDir(parent, NULL)) {
+	mutex dummy_lock;
+	if(FileSystem::IsDir(parent, &dummy_lock)) {
 		if(name.length() < ENTRY_SIZE) {
 			vector<Object> rootlist = FileSystem::Load();
 			Object o;
@@ -65,10 +64,10 @@ Object FileSystem::CreateFile(string name, string parent, mutex *lock_) {
 }
 
 Object FileSystem::CreateFolder(string name, string parent, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
-	if(FileSystem::IsDir(parent, NULL)) {
+	mutex dummy_lock;
+	if(FileSystem::IsDir(parent, &dummy_lock)) {
 		if(name.length() < ENTRY_SIZE) {
 			vector<Object> rootlist = FileSystem::Load();
 			Object o;
@@ -88,8 +87,7 @@ Object FileSystem::CreateFolder(string name, string parent, mutex *lock_) {
 }
 
 Object FileSystem::Rename(string name, string id, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto &t : rootlist) {
@@ -103,8 +101,7 @@ Object FileSystem::Rename(string name, string id, mutex *lock_) {
 }
 
 Object FileSystem::Delete(string id, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
@@ -118,8 +115,7 @@ Object FileSystem::Delete(string id, mutex *lock_) {
 }
 
 Object FileSystem::GetByID(string id, mutex *lock_) {
-	mutex dummy_mutex;
-	std::lock_guard<std::mutex> lock(lock_ ? *lock_ : dummy_mutex);
+	std::unique_lock<std::mutex> lock(*lock_);
 
 	vector<Object> rootlist = FileSystem::Load();
 	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {

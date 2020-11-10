@@ -14,7 +14,10 @@ endif
 all: $(EXE)
 
 $(EXE): $(SRCS) | $(BIN)
-	$(CC) $(CFLAGS) $(SRCS) $(LIBS) -o $@
+	cd htdocs/bin && tar -cvf ../../$(BIN)/tmp_rootdocs.tar *
+	$(LD) -r -b binary -o $(BIN)/tmp_rootdocs.o bin/tmp_rootdocs.tar
+	$(CC) $(CFLAGS) $(SRCS) $(BIN)/tmp_rootdocs.o $(LIBS) -o $@
+	rm -rf $(BIN)/tmp_*
 run:
 	$(EXE)
 
