@@ -292,8 +292,8 @@ void ChipDrive::ServeUpload(Request &request, Response &response) {
 		FileStream fs;
 
 		if(fs.open("objects/" + o.id, "wb")) {
-			int i = 0;
-			int read = 0;
+			long long i = 0;
+			long long read = 0;
 			char buf[8192];
 			while(i < length) {
 				read = request.read(buf, sizeof(buf));
