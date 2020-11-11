@@ -4,6 +4,11 @@
 
 using namespace std;
 
+typedef struct _Token {
+	string id;
+	int expiry;
+} Token;
+
 class Session {
 	public:
 		Session();
@@ -12,5 +17,5 @@ class Session {
 		static string Random(int len);
 		~Session();
 	private:
-		vector <string> tokens;
+		vector<Token> tokens;
 };

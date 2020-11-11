@@ -84,6 +84,7 @@ class ChipDrive {
 		char *GetTarFile(string path, long long *size);
 		void ServeRoot(Request &request, Response &response);
 		void ServeLogin(Request &request, Response &response);
+		void ServeLogout(Request &request, Response &response);
 		void ServeConfig(Request &request, Response &response);
 		void ServeList(Request &request, Response &response);
 		void ServeCreateFolder(Request &request, Response &response);

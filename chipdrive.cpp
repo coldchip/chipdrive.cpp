@@ -17,7 +17,7 @@ void ChipDrive::start()	{
 }
 
 bool ChipDrive::auth(string username, string password) {
-	if(username.compare("coldchip") == 0 && password.compare("CHHfV2JFXyUXPnPfLGxrkuhpuHBXect4") == 0) {
+	if(username.compare("coldchip") == 0 && password.compare("CZwemNFdfcZHzXd8Eh52FgEysEfyBTWL") == 0) {
 		return true;
 	}
 	return false;
@@ -45,6 +45,12 @@ void ChipDrive::Router(Request &request, Response &response) {
 		
 		if(request.path.compare("/api/v1/login") == 0) {
 			this->ServeLogin(request, response);
+		} else if(request.path.compare("/api/v1/logout") == 0) {
+			if(validation == true) {
+				this->ServeLogout(request, response);
+			} else {
+				throw ChipDriveAuthException("Auth Required");
+			}
 		} else if(request.path.compare("/api/v1/drive/config") == 0) {
 			if(validation == true) {
 				this->ServeConfig(request, response);
@@ -194,6 +200,14 @@ void ChipDrive::ServeLogin(Request &request, Response &response) {
 	}
 }
 
+void ChipDrive::ServeLogout(Request &request, Response &response) {
+	string raw = this->MakeJSON(true, "", json());
+
+	response.SetHeader("Content-Length", to_string(raw.size()));
+	response.SetHeader("Content-Type", "application/json");
+	response.write(raw);
+}
+
 void ChipDrive::ServeConfig(Request &request, Response &response) {
 	json config = {
 		{ "root", "root" },
@@ -269,7 +283,7 @@ void ChipDrive::ServeDelete(Request &request, Response &response) {
 	string itemid = request.GetQuery("itemid");
 
 	if(itemid.length() > 0) {
-		FileSystem::Delete(itemid, this->lock);
+		Object o = FileSystem::Delete(itemid, this->lock);
 
 		string raw = this->MakeJSON(true, "", json());
 

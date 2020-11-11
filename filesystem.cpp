@@ -104,11 +104,16 @@ Object FileSystem::Delete(string id, mutex *lock_) {
 	std::unique_lock<std::mutex> lock(*lock_);
 
 	vector<Object> rootlist = FileSystem::Load();
-	for(auto t = rootlist.begin(); t != rootlist.end(); ++t) {
+
+	auto t = rootlist.begin();
+
+	while(t != rootlist.end()) {
 		if(t->id == id) {
 			rootlist.erase(t);
 			FileSystem::Save(rootlist);
 			return *t;
+		} else {
+			t++;
 		}
 	}
 	throw FileSystemException("Unable to Find Object");
