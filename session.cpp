@@ -31,7 +31,7 @@ string Session::GenerateToken(mutex *lock_) {
 
 	Token token;
 	token.id     = random;
-	token.expiry = time(NULL) + 30;
+	token.expiry = time(NULL) + 60 * 60;
 
 	this->tokens.push_back(token);
 	return random;
