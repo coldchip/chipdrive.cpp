@@ -19,9 +19,31 @@ body, html {
 	height: 40px;
 }
 
+.chipdrive .nav {
+	display: flex;
+	flex-direction: row;	
+	width: 100%;
+	height: 50px;
+	border-bottom: 1px solid #787878;
+}
+
+.chipdrive .nav .nav-item {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: #FFFFFF;
+	flex: 0 0 100px;
+	height: 100%;
+}
+
+.chipdrive .nav .nav-item .nav-text {
+	font-weight: 500;
+	color: #4D4D4D;
+}
+
 .chipdrive .list-wrapper {
 	width: 100%;
-	height: calc(100% - 64px);
+	height: calc(100% - 64px - 50px);
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
 	grid-gap: 16px;
@@ -73,4 +95,22 @@ body, html {
 	text-overflow: ellipsis;
 	font-weight: 600;
 	color: #4D4D4D;
+}
+
+@media (max-width: 399.98px) {
+	.chipdrive .nav {
+		justify-content: space-around;
+	}
+}
+
+@media (min-width: 400px) and (max-width: 767.98px) {
+	.chipdrive .nav {
+		justify-content: space-around;
+	}
+}
+
+@media (min-width: 768px) {
+	.chipdrive .nav {
+		justify-content: flex-start;
+	}
 }

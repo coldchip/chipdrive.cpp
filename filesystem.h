@@ -13,12 +13,14 @@
 using namespace std;
 
 #define ENTRY_SIZE 256
+#define META_SIZE 8192
 
 typedef struct _Node {
 	int type;
 	char parent[ENTRY_SIZE];
 	char name[ENTRY_SIZE];
-	char id[ENTRY_SIZE];
+	char id[ENTRY_SIZE]; 
+	char meta[ENTRY_SIZE]; 
 } Node;
 
 typedef struct _Object {
@@ -26,6 +28,7 @@ typedef struct _Object {
 	string parent;
 	string name;
 	string id;
+	string meta;
 } Object;
 
 class FileSystemException : public exception {

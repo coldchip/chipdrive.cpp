@@ -17,7 +17,7 @@ void ChipDrive::start()	{
 }
 
 bool ChipDrive::auth(string username, string password) {
-	if(username.compare("coldchip") == 0 && password.compare("CZwemNFdfcZHzXd8Eh52FgEysEfyBTWL") == 0) {
+	if(username.compare("a") == 0 && password.compare("a") == 0) {
 		return true;
 	}
 	return false;

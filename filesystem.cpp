@@ -174,8 +174,9 @@ vector<Object> FileSystem::Load() {
 						if(fs.read((char*)&id, id_size) == id_size) {
 							id[id_size] = '\0';
 							o.id = string(id);
-
+							
 							list.push_back(o);
+							
 						}
 					}
 				}

@@ -18,7 +18,7 @@
 
 .chipdrive .empty {
 	position: fixed;
-	top: 64px;
+	top: 50%;
 	left: 0;
 	width: 100%;
 }
@@ -32,7 +32,7 @@
 
 .chipdrive .error {
 	position: fixed;
-	top: 64px;
+	top: 50%;
 	left: 0;
 	width: 100%;
 }

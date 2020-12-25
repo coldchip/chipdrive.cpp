@@ -16,6 +16,18 @@
 				</div>
 			</md-toolbar>
 
+			<div class="nav">
+				<div class="nav-item" ng-click="resume()">
+					<p class="nav-text text">SHARED</p>
+				</div>
+				<div class="nav-item" ng-click="about()">
+					<p class="nav-text text">BIN</p>
+				</div>
+				<div class="nav-item" ng-click="contact()">
+					<p class="nav-text text">SETTINGS</p>
+				</div>
+			</div>
+
 			<div id="list" class="list-wrapper">
 				<md-card md-theme="{{ showDarkTheme ? 'dark-orange' : 'default' }}" ng-repeat="x in items track by $index" class="item-wrapper">
 					<div class="top" ng-click="optionsTrigger(x, $event)">
@@ -37,7 +49,7 @@
 			<div class="error" ng-show="showError">
 				<p class="text error-text">Opps, an error had happened</p>
 				<p class="text error-text-sub">{{ errorMsg }}</p>
-				<md-button class="md-raised md-primary error-button" ng-click="reload()">Reload</md-button>
+				<md-button class="md-raised md-primary error-button" ng-click="list(null)">Reload</md-button>
 			</div>
 
 			<div class="loader" ng-show="showSpinner">

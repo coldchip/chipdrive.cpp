@@ -34,6 +34,8 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 		id == null ? id = $scope.root : id;
 		$scope.items = [];
 		$scope.showEmptyPlaceholder = false;
+		$scope.showProgress = false;
+		$scope.showError = false;
 		$scope.showSpinner = true;
 		globals.send(globals.urlf("/api/v1/drive/list", {
 			"folderid": id
@@ -206,7 +208,8 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 			locals:{
 				item: x,
 				renameItem: $scope.renameItem,
-				deleteItem: $scope.deleteItem
+				deleteItem: $scope.deleteItem,
+				changeMeta: $scope.changeMeta
 			},
 			templateUrl: "template/option.html",
 			parent: angular.element(document.body),
@@ -272,7 +275,7 @@ function LoginController($scope, $mdDialog, globals, init) {
 
 LoginController.$inject = ['$scope', '$mdDialog', 'globals', "init"];
 
-function OptionsController($scope, $mdDialog, globals, item, renameItem, deleteItem) {
+function OptionsController($scope, $mdDialog, globals, item, renameItem, deleteItem, changeMeta) {
 	if(item.type == 1) {
 		$scope.type = 'file';
 	} else {
@@ -302,7 +305,7 @@ function OptionsController($scope, $mdDialog, globals, item, renameItem, deleteI
 	}
 }
 
-OptionsController.$inject = ['$scope', '$mdDialog', 'globals', 'item', 'renameItem', 'deleteItem'];
+OptionsController.$inject = ['$scope', '$mdDialog', 'globals', 'item', 'renameItem', 'deleteItem', 'changeMeta'];
 
 function NewItemController($scope, $mdDialog, globals, chooseUpload, createFolder) {
 	$scope.chooseFiles = () => {

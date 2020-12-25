@@ -13,7 +13,7 @@
 			<div ng-if="type == 'image'">
 				<img ng-src="{{src}}" class="full-width full-height">
 			</div>
-			<div ng-if="type == 'audio'">
+			<div ng-if="type == 'audio'" class="dialog-audio">
 				<audio controls="true" preload="auto">
 					<source type="audio/mp3" ng-src="{{src}}">
 				</audio>
