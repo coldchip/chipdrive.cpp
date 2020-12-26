@@ -1,0 +1,13 @@
+[Unit]
+Description=ColdChip ChipDrive
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/chipdrive
+StandardOutput=null
+StandardError=null
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target

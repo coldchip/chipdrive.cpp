@@ -9,7 +9,7 @@ ifeq ($(OS),Windows_NT)
 	LIBS := $(LIBS) -lws2_32
 endif
 
-.PHONY: clean
+.PHONY: clean install
 
 all: $(EXE)
 
@@ -21,6 +21,12 @@ $(EXE): $(SRCS) | $(BIN)
 run:
 	$(EXE)
 
+install:
+	-systemctl stop chipdrive
+	-mkdir -p /etc/chipdrive
+	cp install/chipdrive.service /etc/systemd/system
+	cp bin/chipdrive /usr/local/bin
+	systemctl daemon-reload
 clean:
 	rm -rf bin/*
 

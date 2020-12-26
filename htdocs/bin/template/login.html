@@ -3,10 +3,14 @@
 		<p class="login-header-text text">ColdChip Login</p>
 		<p class="login-subheader-text text">To Continue on <a href="#">ChipDrive</a></p>
 		<p class="login-error-text text">{{ errorText }}</p>
-		<label for="user" class="login-label text">Username: </label>
-		<input type="text" class="login-input-box text" ng-model="username">
-		<label for="user" class="login-label text">Password: </label>
-		<input type="password" class="login-input-box text" ng-model="password">
-		<input type="button" class="login-input-submit text" value="Login" ng-click="login()">
+		<md-input-container class="md-block login-input-box">
+			<label class="login-label text">Username</label>
+			<input type="text" class="text" ng-model="username">
+		</md-input-container>
+		<md-input-container class="md-block login-input-box">
+			<label class="login-label text">Password</label>
+			<input type="password" class="text" ng-model="password">
+		</md-input-container>
+		<md-button class="login-input-submit text md-raised md-primary" ng-click="login()">Login</md-button>
 	</form>
 </md-dialog>
