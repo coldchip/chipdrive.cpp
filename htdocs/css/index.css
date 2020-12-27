@@ -45,7 +45,7 @@ body, html {
 	width: 100%;
 	height: calc(100% - 64px - 50px);
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+	grid-template-columns: repeat(auto-fit, minmax(140px, max-content));
 	grid-gap: 16px;
 	justify-content: center;
 	padding: initial;
@@ -54,8 +54,7 @@ body, html {
 
 .chipdrive .list-wrapper .item-wrapper {
 	position: relative;
-	height: 200px;
-	width: 180px;
+	width: 140px;
 	background-color: none;
 	margin: 10px 10px;
 }
@@ -81,20 +80,19 @@ body, html {
 
 .chipdrive .list-wrapper .item-wrapper .bottom .item-icon {
 	display: block;
-	margin: 30px auto;
-	width: 100px;
-	height: 100px;
+	margin: 15px auto 0px auto;
+	width: 70px;
+	height: 70px;
 }
 
 .chipdrive .list-wrapper .item-wrapper .bottom .title {
 	text-align: center;
 	width: 90%;
-	margin: 15px auto;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	margin: 10px auto;
 	font-weight: 600;
 	color: #4D4D4D;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 @media (max-width: 399.98px) {

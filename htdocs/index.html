@@ -29,7 +29,7 @@
 			</div>
 
 			<div id="list" class="list-wrapper">
-				<md-card md-theme="{{ showDarkTheme ? 'dark-orange' : 'default' }}" ng-repeat="x in items track by $index" class="item-wrapper">
+				<div ng-repeat="x in items track by $index" class="item-wrapper">
 					<div class="top" ng-click="optionsTrigger(x, $event)">
 						<md-icon style="fill: black;" md-svg-src="img/menu-dot.svg"></md-icon>
 					</div>
@@ -37,7 +37,7 @@
 						<img ng-src="{{x.type == 2 ? 'img/folder.svg' : 'img/file.svg'}}" class="md-card-image item-icon" alt="Washed Out">
 						<p class="text title">{{x.name}}</p>
 					</div>
-				</md-card>
+				</div>
 			</div>
 
 			<input type="file" id="upload-hidden" ngf-select style="display: none;" on-change="upload" multiple>
