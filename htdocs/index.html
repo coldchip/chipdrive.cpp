@@ -16,17 +16,17 @@
 				</div>
 			</md-toolbar>
 
-			<div class="nav">
-				<div class="nav-item" ng-click="resume()">
-					<p class="nav-text text">SHARED</p>
-				</div>
-				<div class="nav-item" ng-click="about()">
-					<p class="nav-text text">BIN</p>
-				</div>
-				<div class="nav-item" ng-click="contact()">
-					<p class="nav-text text">SETTINGS</p>
-				</div>
-			</div>
+			<md-nav-bar class="nav" md-selected-nav-item="navItem">
+				<md-nav-item class="nav-item text" md-nav-click="init('my_drive')" name="my_drive">
+					MY DRIVE
+				</md-nav-item>
+				<md-nav-item class="nav-item text" md-nav-click="init('shared')" name="shared">
+					SHARED
+				</md-nav-item>
+				<md-nav-item class="nav-item text" md-nav-click="init('bin')" name="bin">
+					BIN
+				</md-nav-item>
+			</md-nav-bar>
 
 			<div id="list" class="list-wrapper">
 				<div ng-repeat="x in items track by $index" class="item-wrapper">

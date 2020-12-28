@@ -209,14 +209,27 @@ void ChipDrive::ServeLogout(Request &request, Response &response) {
 }
 
 void ChipDrive::ServeConfig(Request &request, Response &response) {
-	json config = {
-		{ "root", "root" },
-	};
-	string raw = this->MakeJSON(true, "", config);
+	string driveid = request.GetQuery("driveid");
 
-	response.SetHeader("Content-Length", to_string(raw.size()));
-	response.SetHeader("Content-Type", "application/json");
-	response.write(raw);
+	if(driveid.length() > 0) {
+		string folderid = "unknown";
+
+		if(driveid.compare("my_drive") == 0) {
+			folderid = "root";
+		}
+
+		json config = {
+			{ "root", folderid },
+		};
+
+		string raw = this->MakeJSON(true, "", config);
+
+		response.SetHeader("Content-Length", to_string(raw.size()));
+		response.SetHeader("Content-Type", "application/json");
+		response.write(raw);
+	} else {
+		throw ChipDriveException("Params Not Satisfiable");
+	}
 }
 
 void ChipDrive::ServeList(Request &request, Response &response) {

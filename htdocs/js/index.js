@@ -232,9 +232,9 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 		});
 	}
 
-	$scope.init = () => {
+	$scope.init = (driveid) => {
 		globals.send(globals.urlf("/api/v1/drive/config", {
-
+			"driveid": driveid
 		}), null, null)
 		.then((response) => {
 			var config = JSON.parse(response).data;
@@ -245,7 +245,9 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 		});
 	}
 
-	$scope.init();
+	$scope.init("my_drive");
+
+	$scope.navItem = "my_drive";
 }]);
 
 function LoginController($scope, $mdDialog, globals, init) {
@@ -261,7 +263,7 @@ function LoginController($scope, $mdDialog, globals, init) {
 			var json = JSON.parse(e);
 			if(json.success == true) {
 				$mdDialog.cancel();
-				init();
+				init('my_drive');
 			} else {
 				$scope.errorText = json.reason;
 				$scope.$apply();
