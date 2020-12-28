@@ -67,14 +67,16 @@ body, html {
 .chipdrive .list-wrapper .item-wrapper .bottom .item-icon {
 	display: block;
 	margin: 15px auto 0px auto;
-	width: 70px;
-	height: 70px;
+    width: 70px;
+    height: 70px;
+    font-size: 4em;
+	text-align: center;
 }
 
 .chipdrive .list-wrapper .item-wrapper .bottom .title {
 	text-align: center;
 	width: 90%;
-	margin: 10px auto;
+	margin: 5px auto;
 	font-weight: 600;
 	color: #4D4D4D;
 	word-wrap: break-word;

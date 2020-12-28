@@ -108,6 +108,8 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 			}).catch((e) => {
 				$scope.onerror(e);
 			});
+		}).catch((e) => {
+			// Cancel
 		});
 	}
 
@@ -134,6 +136,8 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 			}).catch((e) => {
 				$scope.onerror(e);
 			});
+		}).catch((e) => {
+			// Cancel
 		});
 	}
 
@@ -145,7 +149,7 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 		.cancel('Cancel');
 
 		$mdDialog.show(nameDialog)
-		.then(function (name) {
+		.then(function () {
 			$scope.items = [];
 			$scope.showSpinner = true;
 			globals.send(globals.urlf("/api/v1/drive/delete", {
@@ -157,7 +161,24 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 			}).catch((e) => {
 				$scope.onerror(e);
 			});
+		}).catch((e) => {
+			// Cancel
 		});
+	}
+
+	$scope.downloadItem = (item) => {
+		var src = globals.urlf("/api/v1/drive/stream", {
+			"id": item.id
+		});
+		var a = document.createElement("a");
+		a.style.display = "none";
+		a.style.height = "0px";
+		a.href = src;
+		a.download = item.name;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		$mdDialog.cancel();
 	}
 
 	$scope.chooseUpload = () => {
@@ -185,38 +206,6 @@ chipdrive.controller("chipdrivectrl", ['$scope', '$mdDialog', 'globals', ($scope
 			}
 			break;
 		}
-	}
-
-	$scope.newItemTrigger = (ev) => {
-		$mdDialog.show({
-			controller: NewItemController,
-			locals:{
-				chooseUpload: $scope.chooseUpload,
-				createFolder: $scope.createFolder
-			},
-			templateUrl: "template/new.html",
-			parent: angular.element(document.body),
-			targetEvent: ev,
-			clickOutsideToClose: true,
-			fullscreen: $scope.customFullscreen
-		});
-	}
-
-	$scope.optionsTrigger = (x, ev) => {
-		$mdDialog.show({
-			controller: OptionsController,
-			locals:{
-				item: x,
-				renameItem: $scope.renameItem,
-				deleteItem: $scope.deleteItem,
-				changeMeta: $scope.changeMeta
-			},
-			templateUrl: "template/option.html",
-			parent: angular.element(document.body),
-			targetEvent: ev,
-			clickOutsideToClose: true,
-			fullscreen: $scope.customFullscreen
-		});
 	}
 
 	$scope.login = () => {
@@ -276,51 +265,6 @@ function LoginController($scope, $mdDialog, globals, init) {
 }
 
 LoginController.$inject = ['$scope', '$mdDialog', 'globals', "init"];
-
-function OptionsController($scope, $mdDialog, globals, item, renameItem, deleteItem, changeMeta) {
-	if(item.type == 1) {
-		$scope.type = 'file';
-	} else {
-		$scope.type = 'folder';
-	}
-	$scope.rename = () => {
-		renameItem(item);
-		$mdDialog.cancel();
-	}
-	$scope.delete = () => {
-		deleteItem(item);
-		$mdDialog.cancel();
-	}
-	$scope.download = () => {
-		var src = globals.urlf("/api/v1/drive/stream", {
-			"id": item.id
-		});
-		var a = document.createElement("a");
-		a.style.display = "none";
-		a.style.height = "0px";
-		a.href = src;
-		a.download = item.name;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		$mdDialog.cancel();
-	}
-}
-
-OptionsController.$inject = ['$scope', '$mdDialog', 'globals', 'item', 'renameItem', 'deleteItem', 'changeMeta'];
-
-function NewItemController($scope, $mdDialog, globals, chooseUpload, createFolder) {
-	$scope.chooseFiles = () => {
-		chooseUpload();
-		$mdDialog.cancel();
-	}
-	$scope.newFolder = () => {
-		createFolder();
-		$mdDialog.cancel();
-	}
-}
-
-NewItemController.$inject = ['$scope', '$mdDialog', 'globals', 'chooseUpload', 'createFolder'];
 
 function OpenItemController($scope, $mdDialog, globals, item) {
 	$scope.name = item.name;

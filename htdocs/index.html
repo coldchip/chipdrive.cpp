@@ -3,13 +3,14 @@
 	<head>
 		<title>ChipDrive</title>
 		<meta name="viewport" content="width=device-width, user-scalable=no" />
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	</head>
 	<body>
 		<div class="chipdrive full-height" ng-app="chipdrive" ng-controller="chipdrivectrl" ng-cloak>
 			<md-toolbar class="header">
 				<div class="md-toolbar-tools">
 					<md-button class="md-icon-button" aria-label="Menu">
-						<md-icon style="fill: black;" md-svg-src="img/menu.svg"></md-icon>
+						<md-icon class="material-icons" ng-style="{color: '#4D4D4D'}">menu</md-icon>
 					</md-button>
 
 					<img src="img/logo.png" class="logo">
@@ -30,11 +31,34 @@
 
 			<div id="list" class="list-wrapper">
 				<div ng-repeat="x in items track by $index" class="item-wrapper">
-					<div class="top" ng-click="optionsTrigger(x, $event)">
-						<md-icon style="fill: black;" md-svg-src="img/menu-dot.svg"></md-icon>
-					</div>
+					<md-menu>
+						<div class="top" ng-click="$mdMenu.open($event)">
+							<md-icon class="material-icons">more_vert</md-icon>
+						</div>
+						<md-menu-content width="4">
+							<md-menu-item>
+								<md-button class="text" ng-click="renameItem(x)">
+									<md-icon class="material-icons">edit</md-icon>
+									Rename
+								</md-button>
+							</md-menu-item>
+							<md-menu-item>
+								<md-button class="text" ng-click="deleteItem(x)">
+									<md-icon class="material-icons">delete</md-icon>
+									Delete
+								</md-button>
+							</md-menu-item>
+							<md-menu-item ng-show="x.type == 1">
+								<md-button class="text" ng-click="downloadItem(x)">
+									<md-icon class="material-icons">get_app</md-icon>
+									Download
+								</md-button>
+							</md-menu-item>
+						</md-menu-content>
+					</md-menu>
+
 					<div class="bottom" ng-click="openItem(x, $event)">
-						<img ng-src="{{x.type == 2 ? 'img/folder.svg' : 'img/file.svg'}}" class="md-card-image item-icon" alt="Washed Out">
+						<md-icon class="material-icons item-icon">{{x.type == 2 ? 'folder' : 'description'}}</md-icon>
 						<p class="text title">{{x.name}}</p>
 					</div>
 				</div>
@@ -61,9 +85,25 @@
 				<p class="text progress-text">{{ progress }}%</p>
 			</div>
 
-			<md-button class="md-fab md-warn upload-button" ng-click="newItemTrigger($event)">
-				<md-icon md-svg-src="img/plus.svg"></md-icon>
-			</md-button>
+			<md-menu>
+				<md-button class="md-fab md-warn upload-button" ng-click="$mdMenu.open($event)">
+					<md-icon class="material-icons" ng-style="{color: 'white'}">add</md-icon>
+				</md-button>
+				<md-menu-content width="4">
+					<md-menu-item>
+						<md-button class="text" ng-click="chooseUpload()">
+							<md-icon class="material-icons">cloud_upload</md-icon>
+							Upload
+						</md-button>
+					</md-menu-item>
+					<md-menu-item>
+						<md-button class="text" ng-click="createFolder()">
+							<md-icon class="material-icons">create_new_folder</md-icon>
+							New Folder
+						</md-button>
+					</md-menu-item>
+				</md-menu-content>
+			</md-menu>
 		</div>
 	
 	</body>
